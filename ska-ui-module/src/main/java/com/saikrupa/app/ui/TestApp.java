@@ -54,7 +54,6 @@ import com.alee.laf.text.WebTextField;
 import com.alee.laf.text.WebTextPane;
 import com.alee.managers.hotkey.Hotkey;
 import com.alee.utils.SwingUtils;
-import com.fasterxml.jackson.databind.node.TreeTraversingParser;
 import com.github.sarxos.webcam.Webcam;
 import com.github.sarxos.webcam.WebcamPanel;
 import com.saikrupa.app.dao.impl.DefaultOrderDAO;
