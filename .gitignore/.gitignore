@@ -1,0 +1,11 @@
+*.class
+*platformhome.properties
+*.pmd
+*.springBeans
+*.prefs
+*.launch
+hmc.xsd
+*hmc.jar
+*.log
+*.classpath
+**/bin/**
