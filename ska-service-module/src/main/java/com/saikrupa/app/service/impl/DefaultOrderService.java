@@ -47,7 +47,7 @@ public class DefaultOrderService implements OrderService {
 			PreparedStatement statement = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
 			statement.setInt(1, OrderUtil.getOrderStatusCode(order));
 			statement.setInt(2, OrderUtil.getPaymentStatusCode(order));
-			statement.setInt(3, 1); // Delivery Status
+			statement.setInt(3, OrderUtil.getDeliveryStatusCode(order)); // Delivery Status
 			statement.setInt(4, Integer.valueOf(customer.getCode()));
 			statement.setTimestamp(5, new java.sql.Timestamp(order.getCreatedDate().getTime()));
 			ApplicationUserData currentUser = (ApplicationUserData) ApplicationSession.getSession().getCurrentUser();
@@ -300,6 +300,7 @@ public class DefaultOrderService implements OrderService {
 
 	private CustomerData createCustomer(CustomerData customer, Connection connection) throws Exception {
 		if (customer.getCode() == null) {
+			
 			final String SQL_CREATE_CUSTOMER = "INSERT INTO CUSTOMER (NAME, CONTACT_PRIMARY, CONTACT_SECONDARY, LAST_MODIFIED_BY) VALUES(?,?,?,?)";
 			try {
 				PreparedStatement statement = connection.prepareStatement(SQL_CREATE_CUSTOMER,

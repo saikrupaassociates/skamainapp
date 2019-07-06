@@ -11,8 +11,8 @@ import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.VehicleData;
 import com.saikrupa.app.service.VehicleService;
 
-public class DefaultVehicleService implements VehicleService {	
-	
+public class DefaultVehicleService implements VehicleService {
+
 	public List<VehicleData> getVehicles() {
 		String query = "SELECT CODE, VEHICLE_NO from DELIVERY_VEHICLE";
 
@@ -25,7 +25,7 @@ public class DefaultVehicleService implements VehicleService {
 			while (rs.next()) {
 				VehicleData data = new VehicleData();
 				data.setCode(rs.getInt(1));
-				data.setNumber(rs.getString(2));				
+				data.setNumber(rs.getString(2));
 				vehicles.add(data);
 			}
 		} catch (SQLException e) {
@@ -34,6 +34,15 @@ public class DefaultVehicleService implements VehicleService {
 		}
 
 		return vehicles;
+	}
+
+	public VehicleData getExternalVehicle() {
+		for (VehicleData data : getVehicles()) {
+			if(data.getNumber().equalsIgnoreCase("EXTERNAL")) {
+				return data;
+			}
+		}
+		return null;
 	}
 
 }

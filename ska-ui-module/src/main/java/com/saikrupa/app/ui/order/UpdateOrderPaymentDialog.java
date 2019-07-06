@@ -216,7 +216,7 @@ public class UpdateOrderPaymentDialog extends BaseAppDialog {
 
 		getContentPane().add(p1, BorderLayout.NORTH);
 		getContentPane().add(new WebScrollPane(paymentEntryTable), BorderLayout.CENTER);
-		getContentPane().add(buttPanel, BorderLayout.SOUTH);
+		//getContentPane().add(buttPanel, BorderLayout.SOUTH);
 		setSize(900, 500);
 	}
 

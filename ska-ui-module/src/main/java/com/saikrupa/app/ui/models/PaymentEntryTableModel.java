@@ -14,7 +14,7 @@ public class PaymentEntryTableModel extends AbstractTableModel {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String[] columnNames = { "Amount Payable", "Amount Paid", "Balance Amount", "Payment Date", "Status" };
+	private String[] columnNames = { "Payable", "Paid", "Balance", "Payment Date", "Status" };
 
 	private List<PaymentEntryData> paymentEntryList;
 
@@ -43,7 +43,7 @@ public class PaymentEntryTableModel extends AbstractTableModel {
 			return DateUtil.convertToString("dd-MMM-yyyy", data.getPaymentDate());
 		} else if (col == 4) {
 			return (data.getPaymentStatus() == null ? "Unknown" : data.getPaymentStatus().name());
-		}
+		} 
 		return "---";
 	}
 

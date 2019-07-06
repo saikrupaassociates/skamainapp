@@ -46,7 +46,7 @@ public class DefaultMachineService implements MachineService {
 			PreparedStatement stmt = connection.prepareStatement(query);
 			stmt.setInt(1, machineCode);
 			ResultSet rs = stmt.executeQuery();
-			while (rs.next()) {				
+			while (rs.next()) {	
 				data.setCode(rs.getInt(1));
 				data.setName(rs.getString(2));			
 				
@@ -54,7 +54,7 @@ public class DefaultMachineService implements MachineService {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
+		
 		return data;
 	}
 

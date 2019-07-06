@@ -96,6 +96,8 @@
 	<modules>
 		<module>ska-ui-module</module>
 		<module>ska-service-module</module>
+		<module>ska-order-import-module</module>
+		
 	</modules>
 
 </project>

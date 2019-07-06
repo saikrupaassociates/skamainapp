@@ -57,6 +57,9 @@ public abstract class OrderUtil {
 
 	public static int getDeliveryStatusCode(OrderData order) {
 		int status = -1;
+		if(order.getDeliveryStatus() == null) {
+			return 1; //Shpping
+		}
 		switch (order.getDeliveryStatus()) {
 		case SHIPPED:
 			status = 0;

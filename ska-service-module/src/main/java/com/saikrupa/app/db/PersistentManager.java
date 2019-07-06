@@ -30,7 +30,8 @@ public class PersistentManager {
 			
 			if(connection == null) {
 				throw new Exception("Could not be Connected to database");
-			}			
+			}		
+			System.out.println("Database connection established with database : "+bundle.getString("database.connection.string"));
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

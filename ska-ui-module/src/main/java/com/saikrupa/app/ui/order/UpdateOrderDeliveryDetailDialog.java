@@ -21,13 +21,17 @@ import com.alee.extended.window.WebPopOver;
 import com.alee.laf.button.WebButton;
 import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.label.WebLabel;
+import com.alee.laf.optionpane.WebOptionPane;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.rootpane.WebDialog;
 import com.alee.laf.text.WebTextField;
+import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.DeliveryData;
 import com.saikrupa.app.dto.DeliveryStatus;
 import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.VehicleData;
+import com.saikrupa.app.service.VehicleService;
+import com.saikrupa.app.service.impl.DefaultVehicleService;
 import com.saikrupa.app.ui.BaseAppDialog;
 import com.saikrupa.app.ui.SKAMainApp;
 import com.saikrupa.app.ui.component.AppWebLabel;
@@ -49,7 +53,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 	private UpdateOrderDialog parentDialog;
 
 	private OrderEntryData currentOrderEntry;
-	
+
 	private boolean cancelledOperation;
 
 	public UpdateOrderDeliveryDetailDialog(SKAMainApp owner) {
@@ -94,7 +98,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 
 		WebLabel l4 = new WebLabel("Delivery Date : ", SwingConstants.RIGHT);
 		l4.setFont(applyLabelFont());
-		deliveryDateText = new WebDateField(new Date());
+		deliveryDateText = new WebDateField(data.getOrder().getCreatedDate());
 		if (data.getDeliveryData() != null) {
 			deliveryDateText.setDate(data.getDeliveryData().getDeliveryDate());
 		}
@@ -117,7 +121,6 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 					deliveryVehicleCombo.setSelectedIndex(i);
 					break;
 				}
-
 			}
 		}
 
@@ -216,8 +219,22 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 					popOver.setLayout(new VerticalFlowLayout());
 					popOver.add(new AppWebLabel("Delivery Challan Number is missing"));
 					popOver.show((WebTextField) receiptNoText);
-				} else {				
-					updateDeliveryData(data);
+				} else {
+					VehicleData vehicle = (VehicleData) deliveryVehicleCombo.getSelectedItem();
+					if (data.getTransportationCost() == 0) {
+						if (!vehicle.getNumber().equalsIgnoreCase("EXTERNAL")) {
+							int confirmed = WebOptionPane.showConfirmDialog(UpdateOrderDeliveryDetailDialog.this,
+									"Customer has not been charged for Order Delivery.\nHowever, Factory owned Vehicle '"+vehicle.getNumber()+"' has been selected.\n\nDo you wish to continue?",
+									"Confirm", WebOptionPane.YES_NO_OPTION, WebOptionPane.QUESTION_MESSAGE);
+							if (confirmed == WebOptionPane.YES_OPTION) {
+								updateDeliveryData(data);
+							}
+						} else {
+							updateDeliveryData(data);
+						}
+					} else {
+						updateDeliveryData(data);
+					}
 				}
 			}
 		});

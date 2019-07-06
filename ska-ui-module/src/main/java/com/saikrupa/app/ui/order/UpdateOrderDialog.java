@@ -164,7 +164,10 @@ public class UpdateOrderDialog extends BaseAppDialog {
 
 		WebPanel paymentStatusPanel = new WebPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
 		paymentStatusPanel.add(paymentStatusLabel);
-		paymentStatusPanel.add(paymentStatusLookupBtn);
+		if(data.getPaymentStatus() == PaymentStatus.PAID) {
+			paymentStatusPanel.add(paymentStatusLookupBtn);
+		}
+		
 
 		c.gridx = 5;
 		c.gridy = 0;
@@ -249,17 +252,21 @@ public class UpdateOrderDialog extends BaseAppDialog {
 		final WebButton cancelButton = new WebButton("Cancel");
 		cancelButton.setFont(applyLabelFont());
 
-		WebPanel buttonPanel = new WebPanel(new FlowLayout(FlowLayout.RIGHT));
+		WebPanel buttonPanel = new WebPanel(new FlowLayout(FlowLayout.RIGHT, 20, 20));
 		buttonPanel.add(updateButton);
 		buttonPanel.add(cancelButton);
 
-		c.gridx = 0;
-		c.gridy = 3;
-		c.anchor = GridBagConstraints.NORTH;
-		c.insets = new Insets(10, 10, 10, 10); // Left padding
-		c.gridwidth = 7;
-		layout.setConstraints(buttonPanel, c);
-		formPanel.add(buttonPanel);
+//		c.gridx = 0;
+//		c.gridy = 3;
+//		c.anchor = GridBagConstraints.NORTH;
+//		c.insets = new Insets(10, 10, 10, 10); // Left padding
+//		c.gridwidth = 7;
+//		layout.setConstraints(buttonPanel, c);
+//		formPanel.add(buttonPanel);
+		
+		if(data.getDeliveryStatus() == DeliveryStatus.SHIPPED) {
+			updateButton.setEnabled(Boolean.FALSE);
+		}
 
 		updateButton.setActionCommand("UPDATE_ORDER");
 		cancelButton.setActionCommand("CANCEL");
@@ -315,6 +322,7 @@ public class UpdateOrderDialog extends BaseAppDialog {
 		}
 
 		getContentPane().add(mainPanel, BorderLayout.CENTER);
+		getContentPane().add(buttonPanel, BorderLayout.SOUTH);		
 		pack();
 		// setResizable(false);
 	}

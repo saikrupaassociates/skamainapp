@@ -10,5 +10,6 @@ public interface CustomerDAO {
 	
 	public CustomerData findCustomerByCode(String code);
 	public List<PaymentEntryData> findAdhocPaymentByCustomer(String customerCode);
+	public CustomerData lookupCustomerByName(final String name);
 	
 }
