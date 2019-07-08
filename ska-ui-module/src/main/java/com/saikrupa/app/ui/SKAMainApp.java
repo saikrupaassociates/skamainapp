@@ -9,6 +9,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -106,6 +107,7 @@ import com.saikrupa.app.ui.models.VendorTableModel;
 import com.saikrupa.app.ui.order.ManageOrderDialog;
 import com.saikrupa.app.ui.order.UpdateOrderDialog;
 import com.saikrupa.app.util.ApplicationResourceBundle;
+import com.saikrupa.orderimport.ImportService;
 
 public class SKAMainApp extends WebFrame {
 
@@ -145,6 +147,7 @@ public class SKAMainApp extends WebFrame {
 				exitApplication(bundle);
 			}
 		});
+
 		loadDefaultPage();
 	}
 
@@ -344,6 +347,10 @@ public class SKAMainApp extends WebFrame {
 		manageMenu.setFont(getMenuFont());
 		manageMenu.setToolTipText("Manage Operations");
 
+		WebMenu importMenu = new WebMenu("Import...");
+		importMenu.setFont(getMenuFont());
+		importMenu.setToolTipText("Import Orders / Inventory");
+
 		WebLabel tip = new WebLabel("Expense");
 		TooltipManager.setTooltip(tip, "Expense", TooltipWay.trailing);
 		tip.setMargin(4);
@@ -415,7 +422,22 @@ public class SKAMainApp extends WebFrame {
 
 		manageMenu.add(orderMenuItem);
 
+		final WebMenuItem importOrderMenuItem = new WebMenuItem("Orders from Excel");
+		importOrderMenuItem.setFont(getMenuFont());
+		importOrderMenuItem.setToolTipText("Import Orders from Excel file");
+		importOrderMenuItem.setActionCommand("IMPORT_ORDERS");
+
+		final WebMenuItem importInventoryMenuItem = new WebMenuItem("Inventories from Excel");
+		importInventoryMenuItem.setFont(getMenuFont());
+		importInventoryMenuItem.setToolTipText("Import Inventories from Excel file");
+		importInventoryMenuItem.setActionCommand("IMPORT_INVENTORIES");
+
+		importMenu.add(importOrderMenuItem);
+		importMenu.add(importInventoryMenuItem);
+
 		optionMenu.add(manageMenu);
+		optionMenu.addSeparator();
+		optionMenu.add(importMenu);
 		optionMenu.addSeparator();
 		optionMenu.add(exitMenuItem);
 
@@ -491,7 +513,7 @@ public class SKAMainApp extends WebFrame {
 
 		final WebMenu inventoryReportItem = new WebMenu("Inventory");
 		inventoryReportItem.setFont(getMenuFont());
-		inventoryReportItem.setToolTipText("Find Inventory with specific search criteria");		
+		inventoryReportItem.setToolTipText("Find Inventory with specific search criteria");
 
 		final WebMenuItem inventoryCustomMenuItem = new WebMenuItem("Advanced Search");
 		inventoryCustomMenuItem.setFont(getMenuFont());
@@ -547,8 +569,10 @@ public class SKAMainApp extends WebFrame {
 		consolidatedOrderItem.addActionListener(actionListener());
 		deliveredPendingPaymentItem.addActionListener(actionListener());
 		changePasswordMenuItem.addActionListener(actionListener());
-		
+
 		inventoryCustomMenuItem.addActionListener(actionListener());
+		importInventoryMenuItem.addActionListener(actionListener());
+		importOrderMenuItem.addActionListener(actionListener());
 	}
 
 	private ActionListener actionListener() {
@@ -590,17 +614,6 @@ public class SKAMainApp extends WebFrame {
 					buildOrderReport(bundle, e.getActionCommand(), null, e);
 				} else if (e.getActionCommand().equalsIgnoreCase("REPORT_ORDER_BY_CUSTOMER_GROUP")) {
 					buildOrderReport(bundle, e.getActionCommand(), null, e);
-//					DisplayReportSelectionDialog d = new DisplayReportSelectionDialog(SKAMainApp.this);
-//					d.setVisible(true);
-//					if (!d.isActionCancelled()) {
-//						ReportSelectionData data = d.getSelectionData();
-//						System.out.println(data.getStartDate());
-//						System.out.println(data.getEndDate());
-//						Object[] params = new Object[1];
-//						params[0] = data;
-//						buildOrderReport(bundle, e.getActionCommand(), params, e);
-//					}
-
 				} else if (e.getActionCommand().equalsIgnoreCase("REPORT_ORDER_BY_CUSTOMER")) {
 					DisplayCustomerListDialog dialog = new DisplayCustomerListDialog(SKAMainApp.this);
 					dialog.setVisible(true);
@@ -620,7 +633,7 @@ public class SKAMainApp extends WebFrame {
 				} else if (e.getActionCommand().equalsIgnoreCase("EXPENSE_CONSOLIDATED_FILTERED")) {
 					DisplayExpenseReportSelectionDialog d = new DisplayExpenseReportSelectionDialog(SKAMainApp.this);
 					d.setVisible(true);
-					if(d.isActionCancelled()) {
+					if (d.isActionCancelled()) {
 						return;
 					}
 					ReportSelectionData selection = d.getSelectionData();
@@ -628,15 +641,58 @@ public class SKAMainApp extends WebFrame {
 					params[0] = selection;
 					buildExpenseReport(bundle, e.getActionCommand(), params, e);
 				} else if (e.getActionCommand().equalsIgnoreCase("REPORT_INVENTORY")) {
-					DisplayInventoryReportSelectionDialog d = new DisplayInventoryReportSelectionDialog(SKAMainApp.this);
+					DisplayInventoryReportSelectionDialog d = new DisplayInventoryReportSelectionDialog(
+							SKAMainApp.this);
 					d.setVisible(true);
-					if(d.isActionCancelled()) {
+					if (d.isActionCancelled()) {
 						return;
 					}
 					ReportSelectionData selection = d.getSelectionData();
 					Object[] params = new Object[1];
 					params[0] = selection;
 					buildInventoryReport(bundle, e.getActionCommand(), params, e);
+				} else if (e.getActionCommand().equalsIgnoreCase("IMPORT_INVENTORIES")) {
+					WebFileChooser chooser = new WebFileChooser();
+					chooser.setMultiSelectionEnabled(false);
+					FileNameExtensionFilter filter = new FileNameExtensionFilter("EXCEL Files", "xlsx");
+					chooser.setFileFilter(filter);
+					chooser.setDialogTitle("Select Inventory Import File");
+					chooser.setFileSelectionMode(WebFileChooser.FILES_ONLY);
+					chooser.setMultiSelectionEnabled(false);
+
+					int selection = chooser.showOpenDialog(SKAMainApp.this);
+					if (selection == WebFileChooser.APPROVE_OPTION) {
+						String filepath = chooser.getSelectedFile().getAbsolutePath();
+						System.out.println("File Selected : "+filepath);
+						ImportService service = new ImportService("INVENTORY", filepath);
+						List<InventoryEntryData> newEntries = service.processInventoryImport();
+						if(newEntries.isEmpty()) {
+							WebOptionPane.showMessageDialog(SKAMainApp.this, "Inventories could not be imported. Please check Log.");
+						} else {
+							WebOptionPane.showMessageDialog(SKAMainApp.this, "["+newEntries.size()+"] Inventory entries got imported. ");
+						}
+					}
+				} else if (e.getActionCommand().equalsIgnoreCase("IMPORT_ORDERS")) {
+					WebFileChooser chooser = new WebFileChooser();
+					chooser.setMultiSelectionEnabled(false);
+					FileNameExtensionFilter filter = new FileNameExtensionFilter("EXCEL Files", "xlsx");
+					chooser.setFileFilter(filter);
+					chooser.setDialogTitle("Select Order Import File");
+					chooser.setFileSelectionMode(WebFileChooser.FILES_ONLY);
+					chooser.setMultiSelectionEnabled(false);
+
+					int selection = chooser.showOpenDialog(SKAMainApp.this);
+					if (selection == WebFileChooser.APPROVE_OPTION) {
+						String filepath = chooser.getSelectedFile().getAbsolutePath();
+						System.out.println("File Selected : "+filepath);
+						ImportService service = new ImportService("ORDER", filepath);
+						List<com.saikrupa.app.dto.OrderData> newEntries = service.processOrderImport();
+						if(newEntries.isEmpty()) {
+							WebOptionPane.showMessageDialog(SKAMainApp.this, "Orders could not be imported. Please check Log.");
+						} else {
+							WebOptionPane.showMessageDialog(SKAMainApp.this, "["+newEntries.size()+"] Orders imported. ");
+						}
+					}
 				}
 			}
 		};
@@ -655,7 +711,7 @@ public class SKAMainApp extends WebFrame {
 		revalidate();
 	}
 
-	private void exportReport(String actionCommand) throws IOException {		
+	private void exportReport(String actionCommand) throws IOException {
 		WebFileChooser chooser = new WebFileChooser();
 		chooser.setMultiSelectionEnabled(false);
 		FileNameExtensionFilter filter = new FileNameExtensionFilter("PDF Files", "pdf", "PDF");
@@ -663,7 +719,7 @@ public class SKAMainApp extends WebFrame {
 		chooser.setDialogTitle("Save Report As...");
 		chooser.setFileSelectionMode(WebFileChooser.FILES_ONLY);
 		chooser.setMultiSelectionEnabled(false);
-		
+
 		int selection = chooser.showSaveDialog(this);
 		if (selection == WebFileChooser.APPROVE_OPTION) {
 			ReportService reportService = null;
@@ -672,7 +728,7 @@ public class SKAMainApp extends WebFrame {
 				reportService = new PendingPaymentOrderReportService(model.getOrderDataList());
 			} else if ("REPORT_ORDER_PENDING_DELIVERY".equalsIgnoreCase(actionCommand)) {
 				OrderTableModel model = (OrderTableModel) orderContentTable.getModel();
-				reportService = new PendingDeliveryOrderReportService(model.getOrderDataList());				
+				reportService = new PendingDeliveryOrderReportService(model.getOrderDataList());
 			} else if ("REPORT_ORDER_BY_CUSTOMER".equalsIgnoreCase(actionCommand)) {
 				OrderTableModel model = (OrderTableModel) orderContentTable.getModel();
 				reportService = new CustomerOrderReportService(model.getOrderDataList());
@@ -681,7 +737,7 @@ public class SKAMainApp extends WebFrame {
 				reportService = new ConsolidatedOrderReportService(model.getOrderDataList());
 			} else if ("REPORT_ORDER_BY_CUSTOMER_GROUP".equalsIgnoreCase(actionCommand)) {
 				OrderTableModel model = (OrderTableModel) orderContentTable.getModel();
-				reportService = new OrderByCustomerGroupReportService(model.getOrderDataList());				
+				reportService = new OrderByCustomerGroupReportService(model.getOrderDataList());
 			} else if ("DELIVERED_PENDING_PAYMENT".equalsIgnoreCase(actionCommand)) {
 				OrderTableModel model = (OrderTableModel) orderContentTable.getModel();
 				reportService = new DeliveredPendingPaymentOrderReportService(model.getOrderDataList());
@@ -690,11 +746,13 @@ public class SKAMainApp extends WebFrame {
 				reportService = new ConsolidatedExpenseReportService(expenseModel.getExpenseDataList());
 			} else if ("EXPENSE_FILTERED".equalsIgnoreCase(actionCommand)) {
 				ExpenseTableModel expenseModel = (ExpenseTableModel) expenseContentTable.getModel();
-				reportService = new FilteredExpenseReportService(expenseModel.getExpenseDataList(), expenseModel.getSelectionData());	
+				reportService = new FilteredExpenseReportService(expenseModel.getExpenseDataList(),
+						expenseModel.getSelectionData());
 			} else if ("REPORT_INVENTORY".equalsIgnoreCase(actionCommand)) {
-				InventoryHistoryModel invModel = (InventoryHistoryModel)productInventoryHistoryTable.getModel();
-				reportService = new FilteredInventoryReportService(invModel.getInventoryDataList(), invModel.getReportSelectionData());
-				
+				InventoryHistoryModel invModel = (InventoryHistoryModel) productInventoryHistoryTable.getModel();
+				reportService = new FilteredInventoryReportService(invModel.getInventoryDataList(),
+						invModel.getReportSelectionData());
+
 			} else {
 				WebOptionPane.showMessageDialog(this, "Not Implemented");
 				return;
@@ -705,8 +763,8 @@ public class SKAMainApp extends WebFrame {
 				showSuccessNotification();
 			}
 		}
-	}	
-	
+	}
+
 	private void buildInventoryReport(ApplicationResourceBundle bundle, final String status, Object[] params,
 			ActionEvent e) {
 		getContentPane().removeAll();
@@ -724,16 +782,16 @@ public class SKAMainApp extends WebFrame {
 					exportReport(exportReportButton.getActionCommand());
 				} catch (IOException e1) {
 					e1.printStackTrace();
-				}				
+				}
 			}
 		});
 		ReportSelectionData selectionData = (ReportSelectionData) params[0];
-		ProductDAO productDAO = new DefaultProductDAO();		
-		InventoryHistoryModel invHistoryModel = new InventoryHistoryModel(productDAO.searchInventoryWithFilter(selectionData));		 
-		
-			
+		ProductDAO productDAO = new DefaultProductDAO();
+		InventoryHistoryModel invHistoryModel = new InventoryHistoryModel(
+				productDAO.searchInventoryWithFilter(selectionData));
+
 		invHistoryModel.setReportSelectionData(selectionData);
-		productInventoryHistoryTable = new WebTable(invHistoryModel);		
+		productInventoryHistoryTable = new WebTable(invHistoryModel);
 		productInventoryHistoryTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
 		contentPanel.add(new WebScrollPane(productInventoryHistoryTable));
@@ -772,18 +830,18 @@ public class SKAMainApp extends WebFrame {
 					exportReport(exportReportButton.getActionCommand());
 				} catch (IOException e1) {
 					e1.printStackTrace();
-				}				
+				}
 			}
 		});
 
-		ExpenseDAO expenseDAO = new DefaultExpenseDAO();		 
+		ExpenseDAO expenseDAO = new DefaultExpenseDAO();
 		ReportSelectionData selectionData = (ReportSelectionData) params[0];
-		if(selectionData.getSelectionType() == 0) {
+		if (selectionData.getSelectionType() == 0) {
 			exportReportButton.setActionCommand("EXPENSE_CONSOLIDATED");
 		} else {
 			exportReportButton.setActionCommand("EXPENSE_FILTERED");
 		}
-		ExpenseTableModel expenseTableModel = new ExpenseTableModel(expenseDAO.searchExpenseWithFilter(selectionData));	
+		ExpenseTableModel expenseTableModel = new ExpenseTableModel(expenseDAO.searchExpenseWithFilter(selectionData));
 		expenseTableModel.setSelectionData(selectionData);
 		expenseContentTable = new WebTable(expenseTableModel);
 		expenseContentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -806,7 +864,6 @@ public class SKAMainApp extends WebFrame {
 		decorateSouthPanel();
 		revalidate();
 	}
-
 
 	private void buildOrderReport(ApplicationResourceBundle bundle, final String status, Object[] params,
 			ActionEvent e) {
@@ -866,8 +923,6 @@ public class SKAMainApp extends WebFrame {
 		revalidate();
 
 	}
-	
-	
 
 	public void displayOrderScreen(ApplicationResourceBundle bundle, String operation, Integer[] param) {
 		getContentPane().removeAll();
@@ -929,12 +984,11 @@ public class SKAMainApp extends WebFrame {
 						OrderTableModel model = (OrderTableModel) orderContentTable.getModel();
 						OrderData data = model.getOrderDataList().get(currentRow);
 						displayOrderUpdateDialog(data);
-					}					
+					}
 				}
-			}			
+			}
 		};
 		orderContentTable.addMouseListener(mouseListener);
-		
 
 		WebPanel formPanel = new WebPanel();
 		GridBagLayout layout = new GridBagLayout();
@@ -1023,7 +1077,7 @@ public class SKAMainApp extends WebFrame {
 		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
 				bottomPanel);
 		splitPane.setOneTouchExpandable(true);
-		splitPane.setDividerLocation(700);
+		splitPane.setDividerLocation(400);
 		splitPane.setContinuousLayout(false);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 		decorateSouthPanel();
@@ -1128,7 +1182,7 @@ public class SKAMainApp extends WebFrame {
 	}
 
 	public WebTable getProductInventoryHistoryTable() {
-		return productInventoryHistoryTable; 
+		return productInventoryHistoryTable;
 	}
 
 	public void setProductInventoryHistoryTable(WebTable productInventoryHistoryTable) {
@@ -1140,8 +1194,8 @@ public class SKAMainApp extends WebFrame {
 		dialog.setVisible(true);
 
 	}
-	
-	private void displayVendorUpdateDialog(VendorData data) {		
+
+	private void displayVendorUpdateDialog(VendorData data) {
 		UpdateVendorDialog dialog = new UpdateVendorDialog(this, data);
 		dialog.setVisible(true);
 	}
@@ -1478,21 +1532,20 @@ public class SKAMainApp extends WebFrame {
 		vendorContentTable.getTableHeader().setFont(new Font("verdana", Font.BOLD, 14));
 		vendorContentTable.setRowHeight(35);
 		vendorContentTable.setFont(new Font("verdana", Font.PLAIN, 14));
-		
+
 		MouseListener mouseListener = new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() > 1) {					
+				if (e.getClickCount() > 1) {
 					if (e.getSource() == vendorContentTable) {
 						int currentRow = vendorContentTable.getSelectedRow();
 						VendorTableModel model = (VendorTableModel) vendorContentTable.getModel();
-						VendorData data = model.getVendorDataList().get(currentRow);						
+						VendorData data = model.getVendorDataList().get(currentRow);
 						displayVendorUpdateDialog(data);
 					}
 				}
-			}			
+			}
 		};
 		vendorContentTable.addMouseListener(mouseListener);
-		
 
 		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
 				basePanel);
@@ -1621,7 +1674,10 @@ public class SKAMainApp extends WebFrame {
 
 					// Opening SDMainApp
 					SKAMainApp app = new SKAMainApp();
-					app.setSize(new Dimension(1200, 1000));
+					Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
+					System.out.println("Width : " + d.getWidth());
+					System.out.println("Height : " + d.getHeight());
+					app.setSize(new Dimension(d));
 					app.setResizable(true);
 					app.setVisible(true);
 				}

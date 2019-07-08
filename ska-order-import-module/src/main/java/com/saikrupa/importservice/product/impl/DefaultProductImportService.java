@@ -90,11 +90,12 @@ public class DefaultProductImportService implements ProductImportService {
 		return products;
 	}
 
-	public void importProductInventory(List<ProductImportData> products) {
+	public List<InventoryEntryData> importProductInventory(List<ProductImportData> products) {
 		ProductDAO productDao = new DefaultProductDAO();
 		MachineService machineService = new DefaultMachineService();
 		ProductService productService = new DefaultProductService();
 		
+		List<InventoryEntryData> inventoryEntryList = new ArrayList<InventoryEntryData>();
 		for(ProductImportData importProduct : products) {
 			ProductData product = productDao.findProductByCode(importProduct.getCode());
 			if(product == null) {
@@ -124,8 +125,9 @@ public class DefaultProductImportService implements ProductImportService {
 			session.setCurrentUser(userData);			
 			productService.updateInventory(entryData);
 			System.out.println("INFO - Inventory Added ["+importProduct.getQuantityAdded()+"] for Product ["+product.getCode()+"], ["+product.getName()+"]");
-			
+			inventoryEntryList.add(entryData);			
 		}
+		return inventoryEntryList;
 		
 	}
 

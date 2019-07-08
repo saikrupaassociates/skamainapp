@@ -16,6 +16,11 @@
 			<version>0.0.1-R1</version>
 		</dependency>
 		<dependency>
+			<groupId>com.saikrupa</groupId>
+			<artifactId>ska-order-import-module</artifactId>
+			<version>0.0.1-R1</version>
+		</dependency>
+		<dependency>
 			<groupId>com.github.sarxos</groupId>
 			<artifactId>webcam-capture</artifactId>
 			<version>0.3.10</version>

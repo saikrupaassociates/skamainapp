@@ -12,6 +12,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import com.mysql.jdbc.StringUtils;
 import com.saikrupa.app.dao.ApplicationUserDAO;
 import com.saikrupa.app.dao.ProductDAO;
 import com.saikrupa.app.dao.impl.DefaultApplicationUserDAO;
@@ -149,7 +150,7 @@ public class DefaultOrderImportService implements OrderImportService {
 		commerceOrder.setCustomer(commerceCustomer);
 
 		commerceOrder.setPaymentStatus(PaymentStatus.PENDING);
-		if (entry.getDeliveryData() != null) {
+		if (deliveryEntryAvailable(importOrderData.getDelivery())) {
 			commerceOrder.setDeliveryStatus(DeliveryStatus.SHIPPED);
 		} else {
 			commerceOrder.setDeliveryStatus(DeliveryStatus.SHIPPING);
@@ -184,16 +185,13 @@ public class DefaultOrderImportService implements OrderImportService {
 				&& commerceCreatedOrder.getPaymentStatus() == PaymentStatus.PAID) {
 			commerceCreatedOrder.setOrderStatus(OrderStatus.COMPLETED);
 		}
-		if (importOrderData.getDelivery().getDeliveryDate() == null
-				&& importOrderData.getDelivery().getChallanNumber() == null
-				&& importOrderData.getDelivery().getVehicleNumber() == null) {
-			System.out.println("Delivery Entry not Available as expected... Marking Order as CREATED.");
-
+		
+		if(deliveryEntryAvailable(importOrderData.getDelivery())) {
+			System.out.println("Updating Delivery Entry for Order : " + entry.getOrder().getCode());
+			orderService.updateOrderStatus(commerceCreatedOrder);
 		} else {
-			
-		}
-		orderService.updateOrderStatus(commerceCreatedOrder);
-
+			System.out.println("Delivery Entry not Available as expected... Marking Order as CREATED.");
+		}		
 		return commerceCreatedOrder;
 	}
 
@@ -227,6 +225,24 @@ public class DefaultOrderImportService implements OrderImportService {
 		deliveryEntry.setOrderEntryData(entry);
 		entry.setDeliveryData(deliveryEntry);
 		return entry;
+	}
+
+	private boolean deliveryEntryAvailable(DeliveryData importedDeliveryData) {		
+		if (importedDeliveryData == null) {
+			return false;
+		}
+		System.out.println("****************************** DELIVERY ENTRY DATA *************************");
+		System.out.println("File Delivery Date : " + importedDeliveryData.getDeliveryDate());
+		System.out.println("File Challan Number : " + importedDeliveryData.getChallanNumber());
+		System.out.println("File Vehicle Number : " + importedDeliveryData.getVehicleNumber());
+		System.out.println("****************************************************************************");
+
+		if (importedDeliveryData.getDeliveryDate() == null || importedDeliveryData.getChallanNumber() == null
+				|| importedDeliveryData.getVehicleNumber() == null) {
+			return false;
+		}
+		return true;
+
 	}
 
 }

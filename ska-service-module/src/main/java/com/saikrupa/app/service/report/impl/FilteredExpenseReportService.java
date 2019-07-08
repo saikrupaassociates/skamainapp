@@ -136,7 +136,7 @@ public class FilteredExpenseReportService extends AbstractReportService {
 
 	@Override
 	public void addMetaData(Document document) {
-		document.addTitle("Order Report - Delivered :: Pending Payment");
+		document.addTitle("Expense Report - Filtered Expenses");
 		
 	}
 
