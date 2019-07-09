@@ -45,4 +45,25 @@ public class DefaultVehicleService implements VehicleService {
 		return null;
 	}
 
+	public VehicleData getVehicleByNumber(final String vehicleNumber) {
+		String query = "SELECT CODE, VEHICLE_NO from DELIVERY_VEHICLE WHERE VEHICLE_NO =?";
+
+		PersistentManager manager = PersistentManager.getPersistentManager();
+		Connection connection = manager.getConnection();
+		VehicleData vehicleData = null;
+		try {
+			PreparedStatement stmt = connection.prepareStatement(query);
+			stmt.setString(1, vehicleNumber);
+			ResultSet rs = stmt.executeQuery();
+			while (rs.next()) {
+				vehicleData = new VehicleData();
+				vehicleData.setCode(rs.getInt(1));
+				vehicleData.setNumber(rs.getString(2));
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return vehicleData;
+	}
+
 }

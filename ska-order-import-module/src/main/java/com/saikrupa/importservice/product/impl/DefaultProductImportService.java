@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -58,8 +60,15 @@ public class DefaultProductImportService implements ProductImportService {
 					case 0:
 						product.setCode(String.valueOf(cell.getNumericCellValue()));
 						break;
-					case 1:							
-						product.setEntryDate(cell.getDateCellValue());
+					case 1:		
+						Date entryDate = cell.getDateCellValue();
+						Calendar cal = Calendar.getInstance();
+						cal.setTime(entryDate);
+						cal.add(Calendar.HOUR_OF_DAY, 23);
+						cal.add(Calendar.MINUTE, 59);
+						cal.add(Calendar.SECOND, 59);
+						System.out.println(cal.getTime());
+						product.setEntryDate(cal.getTime());
 						break;
 					case 2:
 						product.setQuantityAdded(cell.getNumericCellValue());

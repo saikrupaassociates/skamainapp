@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 
 import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.ApplicationUserData;
@@ -13,7 +12,6 @@ import com.saikrupa.app.dto.InventoryEntryData;
 import com.saikrupa.app.dto.ProductData;
 import com.saikrupa.app.service.ProductService;
 import com.saikrupa.app.session.ApplicationSession;
-import com.saikrupa.app.util.DateUtil;
 
 public class DefaultProductService implements ProductService {
 

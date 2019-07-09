@@ -374,6 +374,11 @@ public class SKAMainApp extends WebFrame {
 		final WebMenu orderMenuItem = new WebMenu("Order");
 		orderMenuItem.setFont(getMenuFont());
 		orderMenuItem.setToolTipText("manage Order");
+		
+		final WebMenuItem orderDeliveryMenuItem = new WebMenuItem("Order Delivery");
+		orderDeliveryMenuItem.setFont(getMenuFont());
+		orderDeliveryMenuItem.setToolTipText("manage Order Delivery");		
+		
 
 		final WebMenuItem productMenuItem = new WebMenuItem("Product");
 		productMenuItem.setFont(getMenuFont());
@@ -421,6 +426,9 @@ public class SKAMainApp extends WebFrame {
 		manageMenu.addSeparator();
 
 		manageMenu.add(orderMenuItem);
+		manageMenu.addSeparator();
+		manageMenu.add(orderDeliveryMenuItem);
+		
 
 		final WebMenuItem importOrderMenuItem = new WebMenuItem("Orders from Excel");
 		importOrderMenuItem.setFont(getMenuFont());
@@ -432,8 +440,10 @@ public class SKAMainApp extends WebFrame {
 		importInventoryMenuItem.setToolTipText("Import Inventories from Excel file");
 		importInventoryMenuItem.setActionCommand("IMPORT_INVENTORIES");
 
-		importMenu.add(importOrderMenuItem);
-		importMenu.add(importInventoryMenuItem);
+		if (loggedOnUser.isAdmin()) {
+			importMenu.add(importOrderMenuItem);
+			importMenu.add(importInventoryMenuItem);
+		}		
 
 		optionMenu.add(manageMenu);
 		optionMenu.addSeparator();
@@ -541,6 +551,7 @@ public class SKAMainApp extends WebFrame {
 		allOrderMenuItem.setActionCommand("MANAGE_ORDER_ALL");
 		customerOrderMenuItem.setActionCommand("MANAGE_ORDER_CUSTOMER");
 		productMenuItem.setActionCommand("MANAGE_PRODUCT");
+		orderDeliveryMenuItem.setActionCommand("MANAGE_ORDER_DELIVERY");
 
 		// Order report Menu Items
 		orderPendingDeliveryItem.setActionCommand("REPORT_ORDER_PENDING_DELIVERY");
@@ -557,6 +568,7 @@ public class SKAMainApp extends WebFrame {
 		employeeMenuItem.addActionListener(actionListener());
 		investMenuItem.addActionListener(actionListener());
 		allOrderMenuItem.addActionListener(actionListener());
+		orderDeliveryMenuItem.addActionListener(actionListener());
 		customerOrderMenuItem.addActionListener(actionListener());
 		productMenuItem.addActionListener(actionListener());
 		orderReportItem.addActionListener(actionListener());
@@ -601,7 +613,9 @@ public class SKAMainApp extends WebFrame {
 						Integer[] params = new Integer[1];
 						params[0] = Integer.valueOf(customer.getCode());
 						displayOrderScreen(bundle, "MANAGE_ORDER_CUSTOMER", params);
-					}
+					} 
+				} else if (e.getActionCommand().equalsIgnoreCase("MANAGE_ORDER_DELIVERY")) {
+					displayOrderDeliveryScreen(bundle);
 				} else if (e.getActionCommand().equalsIgnoreCase("MANAGE_PRODUCT")) {
 					displayProductScreen(bundle);
 				} else if (e.getActionCommand().equalsIgnoreCase("REPORT_ORDER_PENDING_DELIVERY")) {
@@ -697,6 +711,10 @@ public class SKAMainApp extends WebFrame {
 			}
 		};
 		return listener;
+	}
+	
+	private void displayOrderDeliveryScreen(ApplicationResourceBundle bundle) {
+		WebOptionPane.showMessageDialog(this, "To be Implemented...");		
 	}
 
 	private void processChangePassword() {
@@ -1222,44 +1240,7 @@ public class SKAMainApp extends WebFrame {
 
 	private void displayProductScreen(ApplicationResourceBundle bundle) {
 		getContentPane().removeAll();
-		// final WebButton markAsPaidButton = new WebButton("Mark as Paid");
-		// markAsPaidButton.addActionListener(new ActionListener() {
-		// public void actionPerformed(ActionEvent event) {
-		// InventoryHistoryModel model = (InventoryHistoryModel)
-		// productInventoryHistoryTable.getModel();
-		// int[] selectionIndex =
-		// productInventoryHistoryTable.getSelectedRows();
-		// List<InventoryEntryData> entries = new
-		// ArrayList<InventoryEntryData>();
-		// for (int index : selectionIndex) {
-		// InventoryEntryData entryData =
-		// model.getInventoryDataList().get(index);
-		// System.out.println("entryData.getLabourPaymentStatus() : " +
-		// entryData.getLabourPaymentStatus());
-		// if (entryData.getLabourPaymentStatus() == 1) {
-		// continue;
-		// }
-		// entries.add(entryData);
-		// }
-		// if (!CollectionUtils.isEmpty(entries) &&
-		// hasInventorySameProductType(entries)) {
-		// LaborPaymentDialog dialog = new LaborPaymentDialog(SKAMainApp.this,
-		// entries);
-		// dialog.setVisible(true);
-		// } else {
-		// WebOptionPane.showMessageDialog(SKAMainApp.this,
-		// "Please select same type of Products (i.e, 9 INCH");
-		// return;
-		// }
-		//
-		// }
-		// });
-
-		// WebPanel basePanel = new WebPanel(true);
-		// basePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		// basePanel.add(markAsPaidButton);
-		// markAsPaidButton.setEnabled(false);
-		// markAsPaidButton.setFont(new Font("verdana", Font.BOLD, 14));
+		
 
 		WebPanel contentPanel = new WebPanel(true);
 		contentPanel.setLayout(new BorderLayout());
@@ -1673,11 +1654,8 @@ public class SKAMainApp extends WebFrame {
 					WebLookAndFeel.setDecorateDialogs(true);
 
 					// Opening SDMainApp
-					SKAMainApp app = new SKAMainApp();
-					Dimension d = Toolkit.getDefaultToolkit().getScreenSize();
-					System.out.println("Width : " + d.getWidth());
-					System.out.println("Height : " + d.getHeight());
-					app.setSize(new Dimension(d));
+					SKAMainApp app = new SKAMainApp();					
+					app.setSize(new Dimension(800, 700));
 					app.setResizable(true);
 					app.setVisible(true);
 				}

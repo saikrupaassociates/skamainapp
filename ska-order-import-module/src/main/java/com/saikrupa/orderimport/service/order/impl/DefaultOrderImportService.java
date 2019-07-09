@@ -9,10 +9,10 @@ import java.util.List;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.util.NumberToTextConverter;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import com.mysql.jdbc.StringUtils;
 import com.saikrupa.app.dao.ApplicationUserDAO;
 import com.saikrupa.app.dao.ProductDAO;
 import com.saikrupa.app.dao.impl.DefaultApplicationUserDAO;
@@ -93,12 +93,11 @@ public class DefaultOrderImportService implements OrderImportService {
 					case 9:
 						delivery.setDeliveryDate(cell.getDateCellValue());
 						break;
-					case 10:
-						delivery.setVehicleNumber(String.valueOf(cell.getStringCellValue()));
+					case 10:						
+						delivery.setVehicleNumber(cell.getStringCellValue());
 						break;
 					case 11:
-						long challanNo = (long) cell.getNumericCellValue();
-						delivery.setChallanNumber(String.valueOf(challanNo));
+						delivery.setChallanNumber(NumberToTextConverter.toText(cell.getNumericCellValue()));
 						break;
 					}
 				}

@@ -43,7 +43,6 @@
 						<phase>verify</phase>
 						<goals>
 							<goal>copy-resources</goal>
-
 						</goals>
 						<configuration>
 							<outputDirectory>${target.jar.dir}</outputDirectory>

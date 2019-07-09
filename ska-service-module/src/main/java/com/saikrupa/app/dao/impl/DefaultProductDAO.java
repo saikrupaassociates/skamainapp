@@ -145,7 +145,7 @@ public class DefaultProductDAO implements ProductDAO {
 	}
 
 	public List<InventoryEntryData> findInventoryHistoryForAllProduct() {
-		final String sql = "SELECT CODE, CREATED_DATE, OPENING_BALANCE, QUANTITY_ADDED, QUANTITY_REDUCED, QUANTITY_DAMAGED, LABOUR_PAYMENT_STATUS,CLOSING_BALANCE, ORDER_REF, MACHINE_CODE  FROM INVENTORY_ENTRY WHERE INVENTORY_CODE=? order by code desc";
+		final String sql = "SELECT CODE, CREATED_DATE, OPENING_BALANCE, QUANTITY_ADDED, QUANTITY_REDUCED, QUANTITY_DAMAGED, LABOUR_PAYMENT_STATUS,CLOSING_BALANCE, ORDER_REF, MACHINE_CODE  FROM INVENTORY_ENTRY WHERE INVENTORY_CODE=? ORDER BY CODE DESC";
 		PersistentManager manager = PersistentManager.getPersistentManager();
 		Connection connection = manager.getConnection();
 		List<InventoryEntryData> invList = new ArrayList<InventoryEntryData>();

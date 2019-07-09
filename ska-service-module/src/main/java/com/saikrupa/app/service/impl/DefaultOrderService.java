@@ -20,6 +20,7 @@ import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.PaymentEntryData;
 import com.saikrupa.app.service.OrderService;
 import com.saikrupa.app.service.PaymentService;
+import com.saikrupa.app.service.VehicleService;
 import com.saikrupa.app.session.ApplicationSession;
 import com.saikrupa.app.util.OrderUtil;
 
@@ -172,8 +173,9 @@ public class DefaultOrderService implements OrderService {
 			ps.setDouble(3, entryDeliveryData.getActualDeliveryQuantity());
 			ps.setInt(4, Integer.valueOf(entryDeliveryData.getDeliveryReceiptNo()));
 			ps.setDate(5, new java.sql.Date(entryDeliveryData.getDeliveryDate().getTime()));
-			ps.setString(6, entryDeliveryData.getDeliveryVehicleNo());
-
+			
+			VehicleService vehicleService = new DefaultVehicleService();			
+			ps.setInt(6, vehicleService.getVehicleByNumber(entryDeliveryData.getDeliveryVehicleNo()).getCode());
 			ApplicationUserData currentUser = (ApplicationUserData) ApplicationSession.getSession().getCurrentUser();
 			ps.setString(7, currentUser.getUserId());
 
