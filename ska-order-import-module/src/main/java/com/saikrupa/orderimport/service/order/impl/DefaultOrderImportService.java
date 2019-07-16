@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.util.NumberToTextConverter;
@@ -25,15 +26,21 @@ import com.saikrupa.app.dto.OrderStatus;
 import com.saikrupa.app.dto.PaymentEntryData;
 import com.saikrupa.app.dto.PaymentStatus;
 import com.saikrupa.app.dto.ProductData;
+import com.saikrupa.app.dto.VehicleData;
 import com.saikrupa.app.service.OrderService;
+import com.saikrupa.app.service.VehicleService;
 import com.saikrupa.app.service.impl.DefaultOrderService;
+import com.saikrupa.app.service.impl.DefaultVehicleService;
 import com.saikrupa.app.session.ApplicationSession;
+import com.saikrupa.importservice.product.impl.DefaultProductImportService;
 import com.saikrupa.orderimport.dto.CustomerData;
 import com.saikrupa.orderimport.dto.DeliveryData;
 import com.saikrupa.orderimport.dto.OrderData;
 import com.saikrupa.orderimport.service.order.OrderImportService;
 
 public class DefaultOrderImportService implements OrderImportService {
+	
+	private static Logger LOG = Logger.getLogger(DefaultOrderImportService.class);
 
 	public DefaultOrderImportService() {
 	}
@@ -116,7 +123,7 @@ public class DefaultOrderImportService implements OrderImportService {
 				}
 			}
 		}
-		System.out.println("Order Collected : " + orders.size());
+		LOG.info(" Order Collected : " + orders.size());
 		return orders;
 	}
 
@@ -124,7 +131,7 @@ public class DefaultOrderImportService implements OrderImportService {
 		com.saikrupa.app.dto.OrderData commerceOrder = new com.saikrupa.app.dto.OrderData();
 		OrderEntryData entry = createOrderEntry(importOrderData);
 		if (entry == null) {
-			System.out.println("Order Entry could not be created.");
+			LOG.warn("Order Entry could not be created.");
 			return null;
 		}
 		double orderTotalPrice = (entry.getPrice() * entry.getOrderedQuantity()) + entry.getTransportationCost()
@@ -186,10 +193,10 @@ public class DefaultOrderImportService implements OrderImportService {
 		}
 		
 		if(deliveryEntryAvailable(importOrderData.getDelivery())) {
-			System.out.println("Updating Delivery Entry for Order : " + entry.getOrder().getCode());
+			LOG.info(" Updating Delivery Entry for Order : " + entry.getOrder().getCode());
 			orderService.updateOrderStatus(commerceCreatedOrder);
 		} else {
-			System.out.println("Delivery Entry not Available as expected... Marking Order as CREATED.");
+			LOG.info(" Delivery Entry not Available as expected... Marking Order as CREATED.");
 		}		
 		return commerceCreatedOrder;
 	}
@@ -199,7 +206,7 @@ public class DefaultOrderImportService implements OrderImportService {
 		ProductData product = pdao.findProductByCode(importOrderData.getProductCode());
 		InventoryData inventoryLevel = pdao.findInventoryLevelByProduct(product);
 		if (inventoryLevel.getTotalAvailableQuantity() < importOrderData.getQuantity()) {
-			System.out.println("Ordered Quantity [" + importOrderData.getQuantity() + "] exceeds Available Quantity ["
+			LOG.info(" Ordered Quantity [" + importOrderData.getQuantity() + "] exceeds Available Quantity ["
 					+ inventoryLevel.getTotalAvailableQuantity() + "]");
 			return null;
 		}
@@ -220,7 +227,10 @@ public class DefaultOrderImportService implements OrderImportService {
 		deliveryEntry.setActualDeliveryQuantity(entry.getOrderedQuantity());
 		deliveryEntry.setDeliveryDate(importOrderData.getDelivery().getDeliveryDate());
 		deliveryEntry.setDeliveryReceiptNo(importOrderData.getDelivery().getChallanNumber());
-		deliveryEntry.setDeliveryVehicleNo(importOrderData.getDelivery().getVehicleNumber());
+		
+		VehicleService vehicleService = new DefaultVehicleService();
+		VehicleData vehicleData = vehicleService.getVehicleByNumber(importOrderData.getDelivery().getVehicleNumber());
+		deliveryEntry.setDeliveryVehicle(vehicleData);
 		deliveryEntry.setOrderEntryData(entry);
 		entry.setDeliveryData(deliveryEntry);
 		return entry;
@@ -230,11 +240,11 @@ public class DefaultOrderImportService implements OrderImportService {
 		if (importedDeliveryData == null) {
 			return false;
 		}
-		System.out.println("****************************** DELIVERY ENTRY DATA *************************");
-		System.out.println("File Delivery Date : " + importedDeliveryData.getDeliveryDate());
-		System.out.println("File Challan Number : " + importedDeliveryData.getChallanNumber());
-		System.out.println("File Vehicle Number : " + importedDeliveryData.getVehicleNumber());
-		System.out.println("****************************************************************************");
+		LOG.info(" ****************************** DELIVERY ENTRY DATA *************************");
+		LOG.info(" File Delivery Date : " + importedDeliveryData.getDeliveryDate());
+		LOG.info(" File Challan Number : " + importedDeliveryData.getChallanNumber());
+		LOG.info(" File Vehicle Number : " + importedDeliveryData.getVehicleNumber());
+		LOG.info(" ****************************************************************************");
 
 		if (importedDeliveryData.getDeliveryDate() == null || importedDeliveryData.getChallanNumber() == null
 				|| importedDeliveryData.getVehicleNumber() == null) {

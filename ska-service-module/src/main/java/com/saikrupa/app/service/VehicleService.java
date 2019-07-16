@@ -8,4 +8,5 @@ public interface VehicleService {
 	public List<VehicleData> getVehicles();
 	public VehicleData getExternalVehicle();
 	public VehicleData getVehicleByNumber(final String vehicleNumber);
+	public VehicleData getVehicleByCode(final int vehicleCode);
 }

@@ -19,7 +19,9 @@ import com.saikrupa.app.dto.OrderData;
 import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.PaymentEntryData;
 import com.saikrupa.app.dto.PaymentStatus;
-import com.saikrupa.app.dto.ReportSelectionData;
+import com.saikrupa.app.dto.VehicleData;
+import com.saikrupa.app.service.VehicleService;
+import com.saikrupa.app.service.impl.DefaultVehicleService;
 import com.saikrupa.app.util.OrderUtil;
 
 public class DefaultOrderDAO implements OrderDAO {
@@ -224,6 +226,7 @@ public class DefaultOrderDAO implements OrderDAO {
 				+ "WHERE ORDER_CODE = ? AND ENTRY_NO=?";
 		
 		DeliveryData deliveryData = null;
+		VehicleService vehicleService = new DefaultVehicleService();
 		PersistentManager manager = PersistentManager.getPersistentManager();
 		Connection connection = manager.getConnection();
 		try {
@@ -236,7 +239,10 @@ public class DefaultOrderDAO implements OrderDAO {
 				deliveryData.setCode(rs.getInt(1));
 				deliveryData.setActualDeliveryQuantity(rs.getDouble(2));
 				deliveryData.setDeliveryReceiptNo(rs.getString(3));
-				deliveryData.setDeliveryVehicleNo(rs.getString(4));
+				
+				
+				VehicleData vehicleData = vehicleService.getVehicleByCode(rs.getInt(4));
+				deliveryData.setDeliveryVehicle(vehicleData);
 				deliveryData.setDeliveryDate(new java.sql.Date(rs.getDate(5).getTime()));
 			}
 		} catch (SQLException e) {

@@ -1,3 +1,6 @@
+INSERT INTO EXPENSE_CATEGORY(EXP_CAT_NAME, EXP_CAT_DESC) VALUES('Fuel - Tractor','Fuel - Diesel for Tractor');
+INSERT INTO EXPENSE_CATEGORY(EXP_CAT_NAME, EXP_CAT_DESC) VALUES('Fuel - Other vehicle','Fuel - Other vehicle');
+INSERT INTO EXPENSE_CATEGORY(EXP_CAT_NAME, EXP_CAT_DESC) VALUES('Royality - Sand','Royality - Sand');
 INSERT INTO EXPENSE_CATEGORY(EXP_CAT_NAME, EXP_CAT_DESC) VALUES('Labor payment - Brick construction','Labor payment - Brick construction');
 INSERT INTO EXPENSE_CATEGORY(EXP_CAT_NAME, EXP_CAT_DESC) VALUES('Labor payment - Brick Delivery','Labor payment - Brick Delivery');
 INSERT INTO EXPENSE_CATEGORY(EXP_CAT_NAME, EXP_CAT_DESC) VALUES('Labor payment - Sand','Labor payment - Sand');

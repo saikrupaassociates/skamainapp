@@ -1,6 +1,7 @@
 package com.saikrupa.app.ui.order;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -9,7 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
@@ -25,13 +25,10 @@ import com.alee.laf.optionpane.WebOptionPane;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.rootpane.WebDialog;
 import com.alee.laf.text.WebTextField;
-import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.DeliveryData;
 import com.saikrupa.app.dto.DeliveryStatus;
 import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.VehicleData;
-import com.saikrupa.app.service.VehicleService;
-import com.saikrupa.app.service.impl.DefaultVehicleService;
 import com.saikrupa.app.ui.BaseAppDialog;
 import com.saikrupa.app.ui.SKAMainApp;
 import com.saikrupa.app.ui.component.AppWebLabel;
@@ -50,7 +47,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 	private WebComboBox deliveryVehicleCombo;
 	private WebTextField actualQuantityText;
 
-	private UpdateOrderDialog parentDialog;
+	private Component parentDialog;
 
 	private OrderEntryData currentOrderEntry;
 
@@ -58,6 +55,17 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 
 	public UpdateOrderDeliveryDetailDialog(SKAMainApp owner) {
 		super(owner);
+		
+	}
+	
+	public UpdateOrderDeliveryDetailDialog(SKAMainApp owner, OrderEntryData data) {
+		super(owner);
+		setCurrentOrderEntry(data);
+		setTitle("Update Order Delivery");
+		setDefaultCloseOperation(WebDialog.DISPOSE_ON_CLOSE);
+		buildGUI_Update(null, data);
+		setLocationRelativeTo(owner);
+		setResizable(false);
 	}
 
 	public UpdateOrderDeliveryDetailDialog(UpdateOrderDialog dialog, OrderEntryData data) {
@@ -117,7 +125,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 			DeliveryVehicleModel model = (DeliveryVehicleModel) deliveryVehicleCombo.getModel();
 			for (int i = 0; i < model.getSize(); i++) {
 				VehicleData vehicleData = model.getElementAt(i);
-				if (vehicleData.getNumber().equalsIgnoreCase(data.getDeliveryData().getDeliveryVehicleNo())) {
+				if (vehicleData.getNumber().equalsIgnoreCase(data.getDeliveryData().getDeliveryVehicle().getNumber())) {
 					deliveryVehicleCombo.setSelectedIndex(i);
 					break;
 				}
@@ -241,8 +249,11 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
-				getParentDialog().getCurrentOrder().setDeliveryStatus(DeliveryStatus.SHIPPING);
-				getParentDialog().resetDeliveryStatus();
+				if(getParentDialog() instanceof UpdateOrderDialog) {
+					UpdateOrderDialog d = (UpdateOrderDialog) getParentDialog();
+					d.getCurrentOrder().setDeliveryStatus(DeliveryStatus.SHIPPING);
+					d.resetDeliveryStatus();
+				}				
 			}
 		});
 		updateDeliveryDataButton.setFont(applyLabelFont());
@@ -278,7 +289,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 		delivery.setOrderEntryData(data);
 		delivery.setDeliveryReceiptNo(receiptNoText.getText());
 		VehicleData vehicle = (VehicleData) deliveryVehicleCombo.getSelectedItem();
-		delivery.setDeliveryVehicleNo(vehicle.getNumber());
+		delivery.setDeliveryVehicle(vehicle);
 		delivery.setDeliveryDate(deliveryDateText.getDate());
 		if (actualQuantityText.getText() == null || actualQuantityText.getText().trim().length() < 1) {
 			delivery.setActualDeliveryQuantity(getCurrentOrderEntry().getOrderedQuantity());
@@ -287,12 +298,21 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 		}
 
 		data.setDeliveryData(delivery);
-		getParentDialog().setCurrentOrder(data.getOrder());
-		getParentDialog().notifyParent();
+		if(getParentDialog() != null) {
+			if(getParentDialog() instanceof UpdateOrderDialog) {
+				UpdateOrderDialog d = (UpdateOrderDialog) getParentDialog();
+				d.setCurrentOrder(data.getOrder());
+				d.notifyParent();
+			} else if(getParentDialog() instanceof SKAMainApp) {
+				SKAMainApp parent = (SKAMainApp) getParentDialog();
+				parent.showSuccessNotification();
+			}
+			
+		}		
 		dispose();
 	}
 
-	public UpdateOrderDialog getParentDialog() {
+	public Component getParentDialog() {
 		return parentDialog;
 	}
 

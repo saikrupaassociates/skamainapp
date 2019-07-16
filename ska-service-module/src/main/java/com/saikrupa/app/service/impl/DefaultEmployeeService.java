@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Calendar;
 
+import org.apache.log4j.Logger;
+
 import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.ApplicationRole;
 import com.saikrupa.app.dto.ApplicationUserData;
@@ -15,6 +17,8 @@ import com.saikrupa.app.service.EmployeeService;
 import com.saikrupa.app.session.ApplicationSession;
 
 public class DefaultEmployeeService implements EmployeeService {
+	
+	private static final Logger LOG = Logger.getLogger(DefaultEmployeeService.class);
 
 	public DefaultEmployeeService() {
 		// TODO Auto-generated constructor stub
@@ -64,7 +68,7 @@ public class DefaultEmployeeService implements EmployeeService {
 		PreparedStatement statement = connection.prepareStatement(UPDATE_REVISION_ACTIVE);
 		statement.setString(1, salaryData.getEmployee().getCode());
 		int rowCount = statement.executeUpdate();
-		System.out.println("reviseSalary :: UPDATE_REVISION_ACTIVE - revisions deactivated : "+rowCount);
+		LOG.info("reviseSalary :: UPDATE_REVISION_ACTIVE - revisions deactivated : "+rowCount);
 		
 		final String SQL_CREATE_EMPLOYEE_SAL = "INSERT INTO EMPLOYEE_SALARY (EMPLOYEE_CODE, EFFECTIVE_FROM, EFFECTIVE_TILL, SALARY, ACTIVE_REVISION, LAST_MODIFIED_BY, LAST_MODIFIED_DATE) VALUES(?,?,?,?,?,?,?)";
 		statement = connection.prepareStatement(SQL_CREATE_EMPLOYEE_SAL,
@@ -166,7 +170,7 @@ public class DefaultEmployeeService implements EmployeeService {
 		
 		int rowCount = statement.executeUpdate();
 		if (rowCount > 0) {
-			System.out.println("New User Login created : for User "+(employee.getName()+" with User ID :: "+employee.getCode()));
+			LOG.info("New User Login created : for User "+(employee.getName()+" with User ID :: "+employee.getCode()));
 		}
 	}
 	
@@ -184,7 +188,7 @@ public class DefaultEmployeeService implements EmployeeService {
 		statement.setString(3, employee.getCode());		
 		int rowCount = statement.executeUpdate();
 		if (rowCount > 0) {
-			System.out.println("Employee Role updated");
+			LOG.info("Employee Role updated");
 		}
 	}
 }

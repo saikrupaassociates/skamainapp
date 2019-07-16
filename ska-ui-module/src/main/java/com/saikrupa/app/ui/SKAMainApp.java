@@ -9,7 +9,6 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -27,6 +26,8 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.TableModel;
+
+import org.apache.log4j.Logger;
 
 import com.alee.extended.image.WebDecoratedImage;
 import com.alee.extended.layout.VerticalFlowLayout;
@@ -59,6 +60,7 @@ import com.saikrupa.app.dao.EmployeeDAO;
 import com.saikrupa.app.dao.ExpenseDAO;
 import com.saikrupa.app.dao.InvestorDAO;
 import com.saikrupa.app.dao.OrderDAO;
+import com.saikrupa.app.dao.OrderDeliveryDAO;
 import com.saikrupa.app.dao.ProductDAO;
 import com.saikrupa.app.dao.impl.CustomerDAO;
 import com.saikrupa.app.dao.impl.DefaultApplicationUserDAO;
@@ -67,6 +69,7 @@ import com.saikrupa.app.dao.impl.DefaultEmployeeDAO;
 import com.saikrupa.app.dao.impl.DefaultExpenseDAO;
 import com.saikrupa.app.dao.impl.DefaultInvestorDAO;
 import com.saikrupa.app.dao.impl.DefaultOrderDAO;
+import com.saikrupa.app.dao.impl.DefaultOrderDeliveryDAO;
 import com.saikrupa.app.dao.impl.DefaultProductDAO;
 import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.ApplicationUserData;
@@ -101,10 +104,12 @@ import com.saikrupa.app.ui.models.EmployeeTableModel;
 import com.saikrupa.app.ui.models.ExpenseTableModel;
 import com.saikrupa.app.ui.models.InventoryHistoryModel;
 import com.saikrupa.app.ui.models.InvestorTableModel;
+import com.saikrupa.app.ui.models.OrderDeliveryTableModel;
 import com.saikrupa.app.ui.models.OrderTableModel;
 import com.saikrupa.app.ui.models.ProductTableModel;
 import com.saikrupa.app.ui.models.VendorTableModel;
 import com.saikrupa.app.ui.order.ManageOrderDialog;
+import com.saikrupa.app.ui.order.UpdateOrderDeliveryDetailDialog;
 import com.saikrupa.app.ui.order.UpdateOrderDialog;
 import com.saikrupa.app.util.ApplicationResourceBundle;
 import com.saikrupa.orderimport.ImportService;
@@ -119,6 +124,7 @@ public class SKAMainApp extends WebFrame {
 	private WebTable orderContentTable;
 	private WebTable productContentTable;
 	private WebTable employeeContentTable;
+	private WebTable orderDeliveryContentTable;
 	private WebTable productInventoryHistoryTable;
 	private WebButton exportReportButton;
 
@@ -128,9 +134,12 @@ public class SKAMainApp extends WebFrame {
 	private WebLabel totalOrderCountLabel;
 
 	private WebMenu profileMenu;
+	
+	private static Logger LOG = Logger.getLogger(SKAMainApp.class);
 
 	public SKAMainApp() {
 		super();
+		LOG.info("SKAMainApp - Initializing application...");
 		init();
 		setIconImage(createImageIcon("appLOGO.jpg").getImage());
 	}
@@ -677,7 +686,7 @@ public class SKAMainApp extends WebFrame {
 					int selection = chooser.showOpenDialog(SKAMainApp.this);
 					if (selection == WebFileChooser.APPROVE_OPTION) {
 						String filepath = chooser.getSelectedFile().getAbsolutePath();
-						System.out.println("File Selected : "+filepath);
+						LOG.info("SKAMainApp - Inventory Import - File Selected : "+filepath);
 						ImportService service = new ImportService("INVENTORY", filepath);
 						List<InventoryEntryData> newEntries = service.processInventoryImport();
 						if(newEntries.isEmpty()) {
@@ -698,7 +707,7 @@ public class SKAMainApp extends WebFrame {
 					int selection = chooser.showOpenDialog(SKAMainApp.this);
 					if (selection == WebFileChooser.APPROVE_OPTION) {
 						String filepath = chooser.getSelectedFile().getAbsolutePath();
-						System.out.println("File Selected : "+filepath);
+						LOG.info("SKAMainApp - File Selected : "+filepath);
 						ImportService service = new ImportService("ORDER", filepath);
 						List<com.saikrupa.app.dto.OrderData> newEntries = service.processOrderImport();
 						if(newEntries.isEmpty()) {
@@ -713,8 +722,53 @@ public class SKAMainApp extends WebFrame {
 		return listener;
 	}
 	
+	private void showOrderDelivery(OrderData data) {
+		UpdateOrderDeliveryDetailDialog d = new UpdateOrderDeliveryDetailDialog(this, data.getOrderEntries().get(0));
+		d.setVisible(true);
+		
+	}
+	
 	private void displayOrderDeliveryScreen(ApplicationResourceBundle bundle) {
-		WebOptionPane.showMessageDialog(this, "To be Implemented...");		
+		WebPanel contentPanel = new WebPanel(true);
+		contentPanel.setLayout(new BorderLayout());
+		
+		OrderDeliveryDAO orderDeliveryDao = new DefaultOrderDeliveryDAO();
+		orderDeliveryContentTable = new WebTable(new OrderDeliveryTableModel(orderDeliveryDao.findOrdersByAllVehicles()));		
+		contentPanel.add(new WebScrollPane(orderDeliveryContentTable));
+
+		orderDeliveryContentTable.getTableHeader().setFont(new Font("verdana", Font.BOLD, 14));
+
+		orderDeliveryContentTable.setRowHeight(35);
+		orderDeliveryContentTable.setFont(new Font("verdana", Font.PLAIN, 14));
+
+		MouseListener mouseListener = new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				if (e.getSource() == orderDeliveryContentTable) {
+					if (e.getClickCount() > 1) {
+						int currentRow = orderDeliveryContentTable.getSelectedRow();
+						OrderDeliveryTableModel model = (OrderDeliveryTableModel) orderDeliveryContentTable.getModel();
+						OrderData data = model.getOrderDataList().get(currentRow);
+						showOrderDelivery(data);
+					}
+				}
+			}			
+		};
+		orderDeliveryContentTable.addMouseListener(mouseListener);		
+
+		WebPanel bottomPanel = new WebPanel();
+		bottomPanel.setLayout(new BorderLayout());
+		
+		WebButton button = new WebButton("Test this");
+		bottomPanel.add(button, BorderLayout.CENTER);
+		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
+				bottomPanel);
+		splitPane.setOneTouchExpandable(true);
+		splitPane.setDividerLocation(200);
+		splitPane.setContinuousLayout(false);
+
+		getContentPane().add(splitPane, BorderLayout.CENTER);
+		decorateSouthPanel();
+		revalidate();	
 	}
 
 	private void processChangePassword() {
@@ -776,7 +830,7 @@ public class SKAMainApp extends WebFrame {
 				return;
 			}
 			if (chooser.getSelectedFile() != null) {
-				System.out.println("Selected File : " + chooser.getSelectedFile().getCanonicalPath());
+				LOG.info("SKAMainApp - Selected File : " + chooser.getSelectedFile().getCanonicalPath());
 				reportService.saveReport(chooser.getSelectedFile().getAbsolutePath());
 				showSuccessNotification();
 			}
@@ -1190,12 +1244,12 @@ public class SKAMainApp extends WebFrame {
 
 		}
 
-		System.out.println("*********************** getValueNew ************************");
-		System.out.println("Total Order Amount : " + values[0]);
-		System.out.println("Paid Amount : " + values[1]);
-		System.out.println("Balance Amount : " + values[2]);
-		System.out.println("Order Count : " + values[3]);
-		System.out.println("***********************************************");
+		LOG.info("SKAMainApp - *********************** getValueNew ************************");
+		LOG.info("SKAMainApp - Total Order Amount : " + values[0]);
+		LOG.info("SKAMainApp - Paid Amount : " + values[1]);
+		LOG.info("SKAMainApp - Balance Amount : " + values[2]);
+		LOG.info("SKAMainApp - Order Count : " + values[3]);
+		LOG.info("SKAMainApp - ***********************************************");
 		return values;
 	}
 
@@ -1661,7 +1715,7 @@ public class SKAMainApp extends WebFrame {
 				}
 			});
 		} catch (Exception e) {
-			System.out.println("Unable to load WebLookAndFeel...");
+			LOG.info("SKAMainApp - Unable to load WebLookAndFeel...");
 		}
 	}
 
@@ -1719,5 +1773,13 @@ public class SKAMainApp extends WebFrame {
 		notificationPopup.setContent(new GroupPanel(clock));
 		NotificationManager.showNotification(notificationPopup);
 		clock.start();
+	}
+
+	public WebTable getOrderDeliveryContentTable() {
+		return orderDeliveryContentTable;
+	}
+
+	public void setOrderDeliveryContentTable(WebTable orderDeliveryContentTable) {
+		this.orderDeliveryContentTable = orderDeliveryContentTable;
 	}
 }

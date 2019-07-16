@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -32,6 +33,8 @@ import com.saikrupa.importservice.product.ProductImportService;
 import com.saikrupa.orderimport.dto.ProductImportData;
 
 public class DefaultProductImportService implements ProductImportService {
+	
+	private static Logger LOG = Logger.getLogger(DefaultProductImportService.class);
 
 	public List<ProductImportData> getProductDataFromFile(String filePath) {
 		List<ProductImportData> products = new ArrayList<ProductImportData>();
@@ -67,7 +70,6 @@ public class DefaultProductImportService implements ProductImportService {
 						cal.add(Calendar.HOUR_OF_DAY, 23);
 						cal.add(Calendar.MINUTE, 59);
 						cal.add(Calendar.SECOND, 59);
-						System.out.println(cal.getTime());
 						product.setEntryDate(cal.getTime());
 						break;
 					case 2:
@@ -85,7 +87,7 @@ public class DefaultProductImportService implements ProductImportService {
 				products.add(product);
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOG.error(e);
 		} finally {
 			if(fileInputStream != null) {
 				try {
@@ -95,7 +97,7 @@ public class DefaultProductImportService implements ProductImportService {
 				}
 			}
 		}
-		System.out.println("Products Collected : "+products.size());
+		LOG.info(" Products Collected : "+products.size());
 		return products;
 	}
 
@@ -108,12 +110,12 @@ public class DefaultProductImportService implements ProductImportService {
 		for(ProductImportData importProduct : products) {
 			ProductData product = productDao.findProductByCode(importProduct.getCode());
 			if(product == null) {
-				System.out.println("WARNING - No Product Available maching with code ["+importProduct.getCode()+"]");
+				LOG.warn(" WARNING - No Product Available maching with code ["+importProduct.getCode()+"]");
 				continue;
 			}
 			MachineData machine = machineService.getMachineByCode(importProduct.getMachineCode());
 			if(machine == null) {
-				System.out.println("WARNING - No machine Available maching with code ["+importProduct.getMachineCode()+"]");
+				LOG.warn(" WARNING - No machine Available maching with code ["+importProduct.getMachineCode()+"]");
 				continue;
 			}	
 			
@@ -133,7 +135,7 @@ public class DefaultProductImportService implements ProductImportService {
 			ApplicationSession session = ApplicationSession.getSession();
 			session.setCurrentUser(userData);			
 			productService.updateInventory(entryData);
-			System.out.println("INFO - Inventory Added ["+importProduct.getQuantityAdded()+"] for Product ["+product.getCode()+"], ["+product.getName()+"]");
+			LOG.info(" INFO - Inventory Added ["+importProduct.getQuantityAdded()+"] for Product ["+product.getCode()+"], ["+product.getName()+"]");
 			inventoryEntryList.add(entryData);			
 		}
 		return inventoryEntryList;

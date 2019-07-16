@@ -5,18 +5,22 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ResourceBundle;
 
+import org.apache.log4j.Logger;
+
 public class PersistentManager {
 	
 	private static PersistentManager persistentManager;
 	
 	private Connection connection;
+	
+	private static final Logger LOG = Logger.getLogger(PersistentManager.class);
 
 	private PersistentManager() {
 		try {
 			ResourceBundle bundle = ResourceBundle.getBundle("database");
 			createConnection(bundle);
 		} catch(Exception e) {
-			e.printStackTrace();
+			LOG.error(e);
 		}
 	}
 	
@@ -31,9 +35,9 @@ public class PersistentManager {
 			if(connection == null) {
 				throw new Exception("Could not be Connected to database");
 			}		
-			System.out.println("Database connection established with database : "+bundle.getString("database.connection.string"));
+			LOG.info("Database connection established with database : "+bundle.getString("database.connection.string"));
 		} catch(Exception e) {
-			e.printStackTrace();
+			LOG.error(e);
 		}
 	}
 	
@@ -54,7 +58,7 @@ public class PersistentManager {
 			String entry = bundle.getString("database.connection.string");
 			return entry.substring(entry.lastIndexOf("/")+1, entry.length());
 		} catch(Exception e) {
-			e.printStackTrace();
+			LOG.error(e);
 		}
 		return null;
 	}
@@ -64,7 +68,7 @@ public class PersistentManager {
 			try {
 				connection.close();				
 			} catch (SQLException e) {
-				e.printStackTrace();
+				LOG.error(e);
 			}
 		}
 	}

@@ -8,7 +8,7 @@ public class DeliveryData {
 	private OrderEntryData orderEntryData;
 	private String deliveryReceiptNo;
 	private Date deliveryDate;
-	private String deliveryVehicleNo;
+	private VehicleData deliveryVehicle;
 	
 	private double actualDeliveryQuantity;
 
@@ -48,20 +48,20 @@ public class DeliveryData {
 		this.deliveryDate = deliveryDate;
 	}
 
-	public String getDeliveryVehicleNo() {
-		return deliveryVehicleNo;
-	}
-
-	public void setDeliveryVehicleNo(String deliveryVehicleNo) {
-		this.deliveryVehicleNo = deliveryVehicleNo;
-	}
-
 	public double getActualDeliveryQuantity() {
 		return actualDeliveryQuantity;
 	}
 
 	public void setActualDeliveryQuantity(double actualDeliveryQuantity) {
 		this.actualDeliveryQuantity = actualDeliveryQuantity;
+	}
+
+	public VehicleData getDeliveryVehicle() {
+		return deliveryVehicle;
+	}
+
+	public void setDeliveryVehicle(VehicleData deliveryVehicle) {
+		this.deliveryVehicle = deliveryVehicle;
 	}
 
 	

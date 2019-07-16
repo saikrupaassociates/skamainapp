@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.saikrupa.app.dao.impl.CustomerDAO;
 import com.saikrupa.app.dao.impl.DefaultCustomerDAO;
 import com.saikrupa.app.dto.CustomerData;
@@ -23,11 +25,13 @@ public class ImportService {
 	private String type;
 	private String filePath;
 	
+	private static final Logger LOG = Logger.getLogger(ImportService.class);
+	
 	
 
 	public ImportService(final String type, final String filePath) {
 		if(type == null) {
-			System.out.println("ERROR - Invalid operation type specified. \nUsage : java -jar ska-order-import-module-0.0.1-R1.jar <INVENTORY or ORDER>");
+			LOG.warn("Invalid operation type specified. \nUsage : java -jar ska-order-import-module-0.0.1-R1.jar <INVENTORY or ORDER>");
 			return;
 		}
 		if(type.toLowerCase().equals(TYPE_INVENTORY.toLowerCase())) {
@@ -35,7 +39,7 @@ public class ImportService {
 		} else if(type.toLowerCase().equals(TYPE_ORDER.toLowerCase())) {
 			setType(TYPE_ORDER);					
 		} else {
-			System.out.println("ERROR - Invalid operation type specified. \nUsage : java -jar ska-order-import-module-0.0.1-R1.jar <PRODUCT or ORDER>");
+			LOG.warn("Invalid operation type specified. \nUsage : java -jar ska-order-import-module-0.0.1-R1.jar <PRODUCT or ORDER>");
 			return;
 		}
 		setFilePath(filePath);
@@ -43,11 +47,11 @@ public class ImportService {
 	}
 
 	public List<InventoryEntryData> processInventoryImport() {
-		System.out.println("INFO - Processing INVENTORY import...");
+		LOG.info("INFO - Processing INVENTORY import...");
 		ProductImportService service = new DefaultProductImportService();
 		List<ProductImportData> products = service.getProductDataFromFile(getFilePath());
 		if(products.isEmpty()) {
-			System.out.println("No Inventory entries available to import -- File ["+getFilePath()+"]");
+			LOG.info("No Inventory entries available to import -- File ["+getFilePath()+"]");
 			return Collections.emptyList();
 		}
 		return executeProductImport(products);
@@ -59,11 +63,11 @@ public class ImportService {
 	}
 
 	public List<com.saikrupa.app.dto.OrderData> processOrderImport() {
-		System.out.println("INFO - Processing ORDER import...");
+		LOG.info("INFO - Processing ORDER import...");
 		OrderImportService importService = new DefaultOrderImportService();
 		List<OrderData> orders = importService.getOrderDataFromFile(getFilePath());
 		if(orders == null || orders.isEmpty()) {
-			System.out.println("No Order entries available to import -- File ["+getFilePath()+"]");
+			LOG.info("No Order entries available to import -- File ["+getFilePath()+"]");
 			return Collections.emptyList();
 		}
 		return executeOrderImport(orders);		
@@ -76,7 +80,7 @@ public class ImportService {
 			final String customerName = order.getCustomer().getName();
 			CustomerData existingCustomerData = customerDao.lookupCustomerByName(customerName);
 			if(existingCustomerData == null) {
-				System.out.println("No Customer available with Name : "+customerName+". Creating...");
+				LOG.info("No Customer available with Name : "+customerName+". Creating...");
 				order.getCustomer().setExistingCustomer(Boolean.FALSE);
 			} else {
 				order.getCustomer().setExistingCustomer(Boolean.TRUE);
@@ -94,9 +98,9 @@ public class ImportService {
 		OrderImportService importService = new DefaultOrderImportService();
 		com.saikrupa.app.dto.OrderData commerceOrder = importService.createOrder(order);
 		if(commerceOrder == null) {
-			System.out.println("Failed to Import Order");
+			LOG.warn("Failed to Import Order");
 		} else {
-			System.out.println("Order ["+commerceOrder.getCode()+"] created successfully");
+			LOG.info("Order ["+commerceOrder.getCode()+"] created successfully");
 		}
 		return commerceOrder;
 	}

@@ -118,7 +118,6 @@ public class DefaultExpenseDAO implements ExpenseDAO {
 			if(params.containsKey("EMPLOYEE")) {
 				ps.setString(2, params.get("EMPLOYEE"));
 			}
-			System.out.println(ps.toString());
 			ResultSet rs = ps.executeQuery();
 			while(rs.next()) {
 				ExpenseData data = new ExpenseData();
@@ -178,7 +177,6 @@ public class DefaultExpenseDAO implements ExpenseDAO {
 			int counter = 0;
 			for(FilterParameter param : filters) {
 				String filterName = param.getFilterName();
-				System.out.println("\nFilter Name : "+filterName);
 				Map<String, Object> entries = param.getParameters();
 				if(filterName.equalsIgnoreCase("DATE")) {
 					final Timestamp fromDate = (Timestamp) entries.get("FROM_DATE");

@@ -75,7 +75,7 @@ public class DisplayOrderDeliveryInfoDialog extends BaseAppDialog {
 		
 		WebLabel l5 = new WebLabel("Delivery Vehicle No : ", SwingConstants.RIGHT);
 		l5.setFont(applyLabelFont());
-		WebLabel deliveryVehicleText = new WebLabel(data.getDeliveryData().getDeliveryVehicleNo());
+		WebLabel deliveryVehicleText = new WebLabel(data.getDeliveryData().getDeliveryVehicle().getNumber());
 
 		c.gridx = 0;
 		c.gridy = 0;
@@ -290,7 +290,7 @@ public class DisplayOrderDeliveryInfoDialog extends BaseAppDialog {
 		
 		WebLabel l6 = new WebLabel("Delivery Vehicle : ", SwingConstants.RIGHT);		
 		l6.setFont(applyLabelFont());
-		final WebLabel deliveryVehicleText = new WebLabel(data.getDeliveryData().getDeliveryVehicleNo());
+		final WebLabel deliveryVehicleText = new WebLabel(data.getDeliveryData().getDeliveryVehicle().getNumber());
 
 		c.gridx = 0;
 		c.gridy = 5;
