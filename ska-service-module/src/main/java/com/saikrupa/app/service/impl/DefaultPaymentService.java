@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.saikrupa.app.dao.impl.CustomerDAO;
 import com.saikrupa.app.dao.impl.DefaultCustomerDAO;
 import com.saikrupa.app.db.PersistentManager;
@@ -24,6 +26,8 @@ import com.saikrupa.app.session.ApplicationSession;
 import com.saikrupa.app.util.OrderUtil;
 
 public class DefaultPaymentService implements PaymentService {
+	
+	private static Logger LOG = Logger.getLogger(DefaultPaymentService.class);
 
 	public DefaultPaymentService() {
 	}
@@ -76,7 +80,7 @@ public class DefaultPaymentService implements PaymentService {
 	}
 
 	private void updateOrder(OrderData order, Connection connection) throws Exception {
-		System.out.println("updateOrder : Order Created Date : "+order.getCreatedDate());
+		LOG.info("updateOrder : Order Created Date : "+order.getCreatedDate());
 		final String sql = "UPDATE COM_ORDER SET ORDER_STATUS = ?, PAYMENT_STATUS = ? , CREATED_DATE = ?, MODIFIED_DATE = ? , LAST_MODIFIED_BY = ? WHERE CODE=?";
 		PreparedStatement statement = null;
 		try {
@@ -128,7 +132,7 @@ public class DefaultPaymentService implements PaymentService {
 				
 			}
 			connection.commit();
-			System.out.println("***************************     updateOrderPaymentsForCustomer : COMITTED ..");
+			LOG.info("***************************     updateOrderPaymentsForCustomer : COMITTED ..");
 		} catch (Exception e) {
 			e.printStackTrace();
 			hasError = true;
@@ -147,14 +151,14 @@ public class DefaultPaymentService implements PaymentService {
 			throws Exception {
 		final String sql = "UPDATE ADHOC_PAYMENT_ENTRY SET AD_PAYABLE_AMOUNT =? WHERE CODE = ?";
 		try {
-			System.out.println("Entry Code : "+existingPaymentEntry.getCode());
-			System.out.println("Updarted PayableAmount : "+existingPaymentEntry.getPayableAmount());
+			LOG.info("Entry Code : "+existingPaymentEntry.getCode());
+			LOG.info("Updarted PayableAmount : "+existingPaymentEntry.getPayableAmount());
 			PreparedStatement statement = connection.prepareStatement(sql);			
 			statement.setDouble(1, existingPaymentEntry.getPayableAmount());
 			statement.setInt(2, existingPaymentEntry.getCode());
-			System.out.println("Statement : "+statement.toString());
+			LOG.info("Statement : "+statement.toString());
 			int rows = statement.executeUpdate();
-			System.out.println("updateCustomerPaymentEntry :: Rows updated :"+rows);
+			LOG.info("updateCustomerPaymentEntry :: Rows updated :"+rows);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw e;
@@ -169,12 +173,12 @@ public class DefaultPaymentService implements PaymentService {
 
 		boolean hasError = false;
 		try {
-			System.out.println(paymentEntries.size());
+			LOG.info(paymentEntries.size());
 			connection.setAutoCommit(false);
 			for (PaymentEntryData entry : paymentEntries) {
-				System.out.println("Amount : "+entry.getAmount());
-				System.out.println("payableAmount : "+entry.getPayableAmount());
-				System.out.println("Payment Status : "+entry.getPaymentStatus());
+				LOG.info("Amount : "+entry.getAmount());
+				LOG.info("payableAmount : "+entry.getPayableAmount());
+				LOG.info("Payment Status : "+entry.getPaymentStatus());
 				addPaymentEntryForOrderEntry(entry.getOrderEntryData(), connection);
 			}
 			CustomerDAO customerDAO = new DefaultCustomerDAO();
@@ -203,7 +207,7 @@ public class DefaultPaymentService implements PaymentService {
 		} finally {
 			if (hasError) {
 				try {
-					System.out.println("Roll back...");
+					LOG.warn("Roll back...");
 					connection.rollback();
 				} catch (SQLException e) {
 					e.printStackTrace();
@@ -211,9 +215,9 @@ public class DefaultPaymentService implements PaymentService {
 			} else {
 				try {
 					connection.commit();
-					System.out.println("Comitted");
+					LOG.info("Comitted");
 				} catch (SQLException e) {
-					System.out.println("Exception while commiting Order ");
+					LOG.info("Exception while commiting Order ");
 					e.printStackTrace();
 				}
 			}
@@ -232,9 +236,9 @@ public class DefaultPaymentService implements PaymentService {
 				statement.addBatch();
 			}
 			int[] rows = statement.executeBatch();
-			System.out.println("updateInventoryEntryForPayment :: Rows updated :"+rows.length);
+			LOG.info("updateInventoryEntryForPayment :: Rows updated :"+rows.length);
 			connection.commit();
-			System.out.println("Committed");
+			LOG.info("Committed");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			try {

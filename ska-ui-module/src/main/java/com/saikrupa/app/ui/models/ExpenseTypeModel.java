@@ -23,7 +23,7 @@ public class ExpenseTypeModel extends DefaultComboBoxModel<ExpenseTypeData> {
 	
 	private void getExpenseTypeData() {			
 		ExpenseTypeDAO dao = new DefaultExpenseTypeDAO();
-		List<ExpenseTypeData> dataList = dao.getExpenseTypes();
+		List<ExpenseTypeData> dataList = dao.getExpenseTypes();		
 		for(int i = 0; i < dataList.size(); i++) {
 			ExpenseTypeData data = dataList.get(i);
 			addElement(data);

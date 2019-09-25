@@ -49,7 +49,7 @@ public class DisplayExpenseReportSelectionDialog extends BaseAppDialog {
 
 	public DisplayExpenseReportSelectionDialog(SKAMainApp owner) {
 		super(owner, true);
-		setTitle("Select Report Type");
+		setTitle("Search Expense");
 		setDefaultCloseOperation(WebDialog.DISPOSE_ON_CLOSE);
 
 		buildNewUI();

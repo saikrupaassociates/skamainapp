@@ -16,6 +16,8 @@ import java.util.List;
 
 import javax.swing.SwingConstants;
 
+import org.apache.log4j.Logger;
+
 import com.alee.extended.date.WebDateField;
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.extended.window.WebPopOver;
@@ -71,6 +73,8 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 	private WebComboBox paymentTypeCombo;
 
 	private CustomerData currentCustomer;
+	
+	private static Logger LOG = Logger.getLogger(CreateAdhocOrderPaymentDialog.class);
 
 	public CreateAdhocOrderPaymentDialog(SKAMainApp owner) {
 		super(owner);
@@ -109,7 +113,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 		balanceAmountPayableLabel = new AppWebLabel(String.format("%,.2f", values[2]));
 		balanceAmountPayableLabel.setFont(applyLabelFont());
 		balanceAmountPayableLabel.setActualValue(values[2]);
-		System.out.println("balanceAmountPayableLabel value : " + balanceAmountPayableLabel.getText()+ " Actual Value ["+balanceAmountPayableLabel.getActualValue()+"]");
+		LOG.info("balanceAmountPayableLabel value : " + balanceAmountPayableLabel.getText()+ " Actual Value ["+balanceAmountPayableLabel.getActualValue()+"]");
 
 		WebLabel l3 = new WebLabel("Paid Amount : ", SwingConstants.RIGHT);
 		actualPaidAmountText = new WebTextField(20);
@@ -301,7 +305,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 
 	private void addPaymentEntry() {
 		ordersWithPendingPayment = new ArrayList<OrderData>();
-		System.out.println("-------------------- Now addPaymentEntry started.....---------------------------");
+		LOG.info("-------------------- Now addPaymentEntry started.....---------------------------");
 		OrderDAO orderDAO = new DefaultOrderDAO();
 		List<OrderData> currentCustomerOrders = orderDAO
 				.findOrdersByCustomer(Integer.valueOf(getCurrentCustomer().getCode()));
@@ -315,7 +319,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 						ordersWithPendingPayment.add(order);
 					}
 				}
-				System.out.println("ordersWithPendingPayment :: Size : "+ordersWithPendingPayment.size());
+				LOG.info("ordersWithPendingPayment :: Size : "+ordersWithPendingPayment.size());
 			}
 		}
 		boolean mergeRequired = false;
@@ -334,9 +338,9 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 			}
 		}
 
-		System.out.println("mergeRequired : " + mergeRequired);
-		System.out.println("processPartialPaymentsOnly : " + processPartialPaymentsOnly);
-		System.out.println("processPendingPaymentsOnly : " + processPendingPaymentsOnly);
+		LOG.info("mergeRequired : " + mergeRequired);
+		LOG.info("processPartialPaymentsOnly : " + processPartialPaymentsOnly);
+		LOG.info("processPendingPaymentsOnly : " + processPendingPaymentsOnly);
 
 		if (mergeRequired) {			
 			List<PaymentEntryData> mergedEntries = merge(partialPaymentsToConsider, pendingPaymentEntries);			
@@ -351,15 +355,15 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 				processPaymentEntries(pendingPaymentEntries);
 			}
 		}
-		System.out.println("-------------------- Now addPaymentEntry Completed.....---------------------------");
+		LOG.info("-------------------- Now addPaymentEntry Completed.....---------------------------");
 	}
 
 	private void processPaymentEntries(List<PaymentEntryData> paymentEntries) {
-		System.out.println("-------------------- Now performing persisting.....---------------------------");
+		LOG.info("-------------------- Now performing persisting.....---------------------------");
 		PaymentService paymentService = new DefaultPaymentService();
 		PaymentEntryData customerPaymentEntry = new PaymentEntryData();
 		customerPaymentEntry.setAdjusted(Boolean.FALSE);
-		System.out.println("balanceAmountPayableLabel getActualValue : "+balanceAmountPayableLabel.getActualValue());
+		LOG.info("balanceAmountPayableLabel getActualValue : "+balanceAmountPayableLabel.getActualValue());
 		customerPaymentEntry.setPayableAmount((Double) balanceAmountPayableLabel.getActualValue());
 		customerPaymentEntry.setAmount(Double.valueOf(actualPaidAmountText.getText()));
 		customerPaymentEntry.setPaymentDate(getCurrentPaymentEntry().getPaymentDate());
@@ -367,7 +371,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 		customerPaymentEntry.setChequeNumber(getCurrentPaymentEntry().getChequeNumber());
 		paymentService.addAdhocPayment(getCurrentCustomer().getCode(), paymentEntries, customerPaymentEntry);
 		processPaymentProcessedEvent((SKAMainApp) getOwner());
-		System.out.println("-------------------- Now performing persisting...Completed ---------------------------");
+		LOG.info("-------------------- Now performing persisting...Completed ---------------------------");
 	}
 
 	private List<PaymentEntryData> merge(List<PaymentEntryData> partials, List<PaymentEntryData> pending) {
@@ -387,14 +391,14 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 
 	private void printPaymentEntries(List<PaymentEntryData> payments) {
 		for (PaymentEntryData data : payments) {
-			System.out.println("############################################################");
-			System.out.println("Payment Entry No : " + data.getEntryNumber());
-			System.out.println("Payment Status : " + data.getPaymentStatus());
-			System.out.println("Amount : " + data.getAmount());
-			System.out.println("Payable Amount : " + data.getPayableAmount());
-			System.out.println("Order No : " + data.getOrderEntryData().getOrder().getCode());
-			System.out.println("Order Status : " + data.getOrderEntryData().getOrder().getPaymentStatus());
-			System.out.println("############################################################");
+			LOG.info("############################################################");
+			LOG.info("Payment Entry No : " + data.getEntryNumber());
+			LOG.info("Payment Status : " + data.getPaymentStatus());
+			LOG.info("Amount : " + data.getAmount());
+			LOG.info("Payable Amount : " + data.getPayableAmount());
+			LOG.info("Order No : " + data.getOrderEntryData().getOrder().getCode());
+			LOG.info("Order Status : " + data.getOrderEntryData().getOrder().getPaymentStatus());
+			LOG.info("############################################################");
 		}
 	}
 
@@ -440,7 +444,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 						 */
 					}
 				} else {
-					System.out.println("Skipping Split as current entry has been exhausted...");
+					LOG.info("Skipping Split as current entry has been exhausted...");
 				}
 			}
 		}
@@ -448,13 +452,13 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 	}
 
 	private List<PaymentEntryData> evaluateForPendingOrders(List<OrderData> ordersWithPendingPayments) {
-		System.out.println(
+		LOG.info(
 				"****************************************** evaluateForPendingOrders ******************************************");
 		ArrayList<PaymentEntryData> pendingPaymentEntries = new ArrayList<PaymentEntryData>();
 		for (OrderData order : ordersWithPendingPayments) {
-			System.out.println("Order No : " + order.getCode());
-			System.out.println("Order Amount : " + order.getTotalPrice());
-			System.out.println("Customer Entry Amount  : " + getCurrentPaymentEntry().getAmount());	
+			LOG.info("Order No : " + order.getCode());
+			LOG.info("Order Amount : " + order.getTotalPrice());
+			LOG.info("Customer Entry Amount  : " + getCurrentPaymentEntry().getAmount());	
 			
 			for (OrderEntryData oe : order.getOrderEntries()) {
 				if (getCurrentPaymentEntry().getAmount() > 0) {
@@ -464,25 +468,25 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 						ped.setAmount(getCurrentPaymentEntry().getAmount());
 						ped.setPayableAmount(order.getTotalPrice());
 						getCurrentPaymentEntry().setAmount(getCurrentPaymentEntry().getAmount() - ped.getAmount());
-						System.out.println("New Entry Amount: " + ped.getAmount());
-						System.out.println("New Entry Payable Amount: " + ped.getPayableAmount());
-						System.out.println("Balance Amount Available : " + getCurrentPaymentEntry().getAmount());
+						LOG.info("New Entry Amount: " + ped.getAmount());
+						LOG.info("New Entry Payable Amount: " + ped.getPayableAmount());
+						LOG.info("Balance Amount Available : " + getCurrentPaymentEntry().getAmount());
 					} else if (order.getTotalPrice() - getCurrentPaymentEntry().getAmount() == 0) {
 						ped.setPaymentStatus(PaymentStatus.PAID);
 						ped.setAmount(getCurrentPaymentEntry().getAmount());
 						ped.setPayableAmount(order.getTotalPrice());
 						getCurrentPaymentEntry().setAmount(getCurrentPaymentEntry().getAmount() - ped.getAmount());
-						System.out.println("New Entry Amount: " + ped.getAmount());
-						System.out.println("New Entry Payable Amount: " + ped.getPayableAmount());
-						System.out.println("Balance Amount Available : " + getCurrentPaymentEntry().getAmount());
+						LOG.info("New Entry Amount: " + ped.getAmount());
+						LOG.info("New Entry Payable Amount: " + ped.getPayableAmount());
+						LOG.info("Balance Amount Available : " + getCurrentPaymentEntry().getAmount());
 					} else if (order.getTotalPrice() < getCurrentPaymentEntry().getAmount()) {
 						ped.setPaymentStatus(PaymentStatus.PAID);
 						ped.setAmount(order.getTotalPrice());
 						ped.setPayableAmount(order.getTotalPrice());
 						getCurrentPaymentEntry().setAmount(getCurrentPaymentEntry().getAmount() - ped.getAmount());
-						System.out.println("New Entry Amount: " + ped.getAmount());
-						System.out.println("New Entry Payable Amount: " + ped.getPayableAmount());
-						System.out.println("Balance Amount Available : " + getCurrentPaymentEntry().getAmount());
+						LOG.info("New Entry Amount: " + ped.getAmount());
+						LOG.info("New Entry Payable Amount: " + ped.getPayableAmount());
+						LOG.info("Balance Amount Available : " + getCurrentPaymentEntry().getAmount());
 					}
 
 					ped.setEntryNumber(1);
@@ -492,7 +496,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 					pendingPaymentEntries.add(ped);
 				}
 			}
-			System.out.println(
+			LOG.info(
 					"****************************************** evaluateForPendingOrders ******************************************");
 		}
 		return pendingPaymentEntries;
@@ -509,7 +513,7 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 				}
 			}
 		}
-		System.out.println("lastPaymentEntry balance Amount : "
+		LOG.info("lastPaymentEntry balance Amount : "
 				+ (lastPaymentEntry.getPayableAmount() - lastPaymentEntry.getAmount()));
 		return lastPaymentEntry;
 	}

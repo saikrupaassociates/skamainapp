@@ -12,7 +12,7 @@ import com.saikrupa.app.util.DateUtil;
 public class ExpenseTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 1L;
-	private String[] columnNames = { "Expense #", "Expense Category", "Amount", "Expense Date", "Paid To", "Payment Mode", "Paid By", "Modified By"};
+	private String[] columnNames = { "Expense #", "Expense Category", "Amount", "Expense Date", "Paid To", "Payment Mode", "Paid By"};
 	private List<ExpenseData> expenseDataList;
 	
 	private ReportSelectionData selectionData;
@@ -48,9 +48,7 @@ public class ExpenseTableModel extends AbstractTableModel {
 		} else if(col == 6) {
 			InvestorData invData = data.getPaidBy();			
 			return invData.getName();
-		} else if(col == 7) {
-			return "TBD";
-		}
+		} 
 		return "---";
 	}
 	

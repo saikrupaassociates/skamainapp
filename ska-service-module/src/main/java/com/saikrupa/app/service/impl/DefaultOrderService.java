@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.saikrupa.app.dao.ProductDAO;
 import com.saikrupa.app.dao.impl.DefaultProductDAO;
 import com.saikrupa.app.db.PersistentManager;
@@ -26,6 +28,8 @@ import com.saikrupa.app.session.ApplicationSession;
 import com.saikrupa.app.util.OrderUtil;
 
 public class DefaultOrderService implements OrderService {
+	
+	private static Logger LOG = Logger.getLogger(DefaultOrderService.class);
 
 	public OrderData createOrder(OrderData order) {
 		PersistentManager manager = PersistentManager.getPersistentManager();
@@ -76,17 +80,16 @@ public class DefaultOrderService implements OrderService {
 		} finally {
 			if (!commit) {
 				try {
-					System.out.println("Roll back...");
+					LOG.warn("Roll back...");
 					connection.rollback();
 				} catch (SQLException e) {
-					e.printStackTrace();
+					LOG.error("Exception while commiting Order", e);
 				}
 			} else {
 				try {
 					connection.commit();
 				} catch (SQLException e) {
-					System.out.println("Exception while commiting Order ");
-					e.printStackTrace();
+					LOG.error("Exception while commiting Order", e);
 				}
 			}
 		}
@@ -250,7 +253,7 @@ public class DefaultOrderService implements OrderService {
 		
 		int resultCount = statement.executeUpdate();
 		if (resultCount > 0) {
-			System.out.println("Inventory reduced to " + newQuantity + " for product " + entry.getProduct().getName()+" On ["+entry.getOrder().getCreatedDate()+"]");
+			LOG.info("Inventory reduced to " + newQuantity + " for product " + entry.getProduct().getName()+" On ["+entry.getOrder().getCreatedDate()+"]");
 		}
 	}
 
@@ -335,11 +338,11 @@ public class DefaultOrderService implements OrderService {
 
 	public void updateOrderPayment(OrderData order, List<PaymentEntryData> newEntries,
 			List<PaymentEntryData> customerExistingPayments) {
-		System.out.println("***************************     updateOrderPayment ************************");
+		LOG.info("***************************     updateOrderPayment ************************");
 		OrderData newOrder = createOrder(order);
 		PaymentService paymentService = new DefaultPaymentService();
 		paymentService.updateOrderPaymentsForOrder(newOrder, newEntries, customerExistingPayments);
-		System.out.println("***************************     updateOrderPayment :: DONE !!!************************");
+		LOG.info("***************************     updateOrderPayment :: DONE !!!************************");
 
 	}
 

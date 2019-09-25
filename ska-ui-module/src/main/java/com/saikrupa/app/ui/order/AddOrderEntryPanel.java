@@ -16,6 +16,8 @@ import javax.swing.BorderFactory;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingConstants;
 
+import org.apache.log4j.Logger;
+
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.extended.window.WebPopOver;
 import com.alee.laf.button.WebButton;
@@ -31,6 +33,7 @@ import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.OrderStatus;
 import com.saikrupa.app.dto.PaymentStatus;
 import com.saikrupa.app.dto.ProductData;
+import com.saikrupa.app.ui.SKAMainApp;
 import com.saikrupa.app.ui.component.AppWebLabel;
 import com.saikrupa.app.ui.component.AppWebPanel;
 import com.saikrupa.app.ui.models.OrderEntryTableModel;
@@ -63,6 +66,8 @@ public class AddOrderEntryPanel extends AppWebPanel {
 	private WebButton nextButton;
 	private WebButton addToOrderButton;	
 	private WebLabel totalOrderCostLabel;
+	
+	private static Logger LOG = Logger.getLogger(AddOrderEntryPanel.class);
 
 	public AddOrderEntryPanel(ManageOrderDialog owner) {
 		this.owner = owner;
@@ -417,19 +422,10 @@ public class AddOrderEntryPanel extends AppWebPanel {
 			orderQuantityText.setText("350");
 		}
 		Double availableQuantity = product.getInventory().getTotalAvailableQuantity();
-		System.out.println("availableQuantity : "+availableQuantity);
-		if(availableQuantity > UIConstants.QUANTITY_SAFE_THRESOLD) {
-			availableQuantityLabel.setForeground(Color.GREEN);
-			System.out.println("availableQuantity : GREEN");
-		}
-		if(availableQuantity < UIConstants.QUANTITY_SAFE_THRESOLD && availableQuantity > UIConstants.QUANTITY_CRITICAL_THRESOLD) {
-			availableQuantityLabel.setForeground(Color.ORANGE);
-			System.out.println("availableQuantity : ORANGE");
-		}
-		
+		LOG.info("Available Quantity : ["+availableQuantity+"]");
 		if(availableQuantity < UIConstants.QUANTITY_CRITICAL_THRESOLD) {
 			availableQuantityLabel.setForeground(Color.RED);
-			System.out.println("availableQuantity : RED");
+			LOG.info("availableQuantity ["+availableQuantity+"]: RED");
 		}
 		availableQuantityLabel.setFont(applyLabelFont());
 		

@@ -146,6 +146,7 @@ public class SKAMainApp extends WebFrame {
 
 	private void init() {
 		if (!isDBConnectionOK()) {
+			LOG.warn("WARNING - Looks like Database server is not running. Please start the MySQL service and restart application");
 			WebOptionPane.showMessageDialog(this, "DB Connection not available");
 			System.exit(0);
 		}
@@ -165,8 +166,7 @@ public class SKAMainApp extends WebFrame {
 		try {
 			ExpenseDAO dao = new DefaultExpenseDAO();
 			dao.findAllExpenses();
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (Exception e) {			
 			connected = false;
 		}
 		return connected;
@@ -254,7 +254,8 @@ public class SKAMainApp extends WebFrame {
 					} else {
 						ApplicationSession session = ApplicationSession.getSession();
 						session.setCurrentUser(userData);
-						getContentPane().remove(loginPanel);
+						getContentPane().remove(loginPanel);						
+						LOG.info("Logging in User : ["+userData.getUserId()+"]"+userData.getName());
 						setupMenus();
 						decorateSouthPanel();
 						revalidate();
@@ -335,6 +336,10 @@ public class SKAMainApp extends WebFrame {
 		if (confirmed == WebOptionPane.YES_OPTION) {
 			PersistentManager manager = PersistentManager.getPersistentManager();
 			manager.closeConnection();
+			
+			ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();		
+			LOG.info("Logging off User : ["+loggedOnUser.getUserId()+"]"+loggedOnUser.getName());
+			
 			System.exit(0);
 		} else {
 			setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -779,6 +784,8 @@ public class SKAMainApp extends WebFrame {
 	private void processLogoff() {
 		getContentPane().removeAll();
 		menubar.removeAll();
+		ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();		
+		LOG.info("Logging off User : ["+loggedOnUser.getUserId()+"]"+loggedOnUser.getName());
 		showLogin();
 		revalidate();
 	}
@@ -1593,9 +1600,11 @@ public class SKAMainApp extends WebFrame {
 	}
 
 	private void displaySearchExpenseDialog() {
-		SearchExpenseDialog d = new SearchExpenseDialog(this);
+		DisplayExpenseSelectionDialog d = new DisplayExpenseSelectionDialog(this);
 		d.setVisible(true);
-		List<ExpenseData> results = d.getExpenseResult();
+		d.getSelectionData().setSelectionType(1);
+		ExpenseDAO expenseDAO = new DefaultExpenseDAO();
+		List<ExpenseData> results = expenseDAO.searchExpenseWithFilter(d.getSelectionData());
 		ExpenseTableModel expenseTableModel = (ExpenseTableModel) expenseContentTable.getModel();
 		expenseTableModel.setExpenseDataList(results);
 		expenseTableModel.fireTableDataChanged();

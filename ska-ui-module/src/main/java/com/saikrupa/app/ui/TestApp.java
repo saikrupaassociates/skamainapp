@@ -89,8 +89,16 @@ public class TestApp extends WebFrame {
 
 	public TestApp() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		createReportLookupScreen1();
-		// displayExpensePage();
+		showSearchExpenseDialog();
+	}
+	
+	private void showSearchExpenseDialog() {
+		SKAMainApp app = new SKAMainApp();
+		SearchExpenseDialog d = new SearchExpenseDialog(app);
+		d.setVisible(true);
+		if(!d.isVisible()) {
+			System.exit(0);
+		}
 	}
 
 	private void createReportLookupScreen() {
