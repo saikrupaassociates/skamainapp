@@ -15,9 +15,27 @@ import com.saikrupa.app.dto.OrderData;
 
 public class DefaultOrderDeliveryDAO implements OrderDeliveryDAO {
 
-	public List<DeliveryData> findOrderDeliveriesByVehicleCode(int vehicleCode) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<OrderData> findOrderDeliveriesByVehicleCode(int vehicleCode) {
+		String sql = "SELECT A.CODE, C.VEHICLE_NO FROM COM_ORDER A, COM_ORDER_DELIVERY B, DELIVERY_VEHICLE C"
+				+ " WHERE A.CODE=B.ORDER_CODE" + " AND B.VEHICLE_CODE = C.CODE AND C.CODE=?";
+
+		PersistentManager manager = PersistentManager.getPersistentManager();
+		Connection connection = manager.getConnection();
+		OrderDAO orderDao = new DefaultOrderDAO();
+		List<OrderData> orders = new ArrayList<OrderData>();
+		try {
+			PreparedStatement ps = connection.prepareStatement(sql);
+			ps.setInt(1, vehicleCode);
+			ResultSet rs = ps.executeQuery();
+			while (rs.next()) {
+				OrderData order = orderDao.findOrderByCode(rs.getInt(1));
+				orders.add(order);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return orders;
 	}
 
 	public List<OrderData> findOrdersByAllVehicles() {

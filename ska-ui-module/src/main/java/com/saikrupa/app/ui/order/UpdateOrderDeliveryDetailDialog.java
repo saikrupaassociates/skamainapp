@@ -14,6 +14,8 @@ import java.awt.event.WindowEvent;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 
+import org.apache.log4j.Logger;
+
 import com.alee.extended.date.WebDateField;
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.extended.panel.GroupPanel;
@@ -29,6 +31,8 @@ import com.saikrupa.app.dto.DeliveryData;
 import com.saikrupa.app.dto.DeliveryStatus;
 import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.VehicleData;
+import com.saikrupa.app.service.OrderService;
+import com.saikrupa.app.service.impl.DefaultOrderService;
 import com.saikrupa.app.ui.BaseAppDialog;
 import com.saikrupa.app.ui.SKAMainApp;
 import com.saikrupa.app.ui.component.AppWebLabel;
@@ -52,6 +56,8 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 	private OrderEntryData currentOrderEntry;
 
 	private boolean cancelledOperation;
+	
+	private static final Logger LOG = Logger.getLogger(UpdateOrderDeliveryDetailDialog.class);
 
 	public UpdateOrderDeliveryDetailDialog(SKAMainApp owner) {
 		super(owner);
@@ -60,9 +66,12 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 	
 	public UpdateOrderDeliveryDetailDialog(SKAMainApp owner, OrderEntryData data) {
 		super(owner);
+		setParentDialog(owner);
 		setCurrentOrderEntry(data);
 		setTitle("Update Order Delivery");
 		setDefaultCloseOperation(WebDialog.DISPOSE_ON_CLOSE);
+		
+		
 		buildGUI_Update(null, data);
 		setLocationRelativeTo(owner);
 		setResizable(false);
@@ -102,7 +111,11 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 		WebLabel l31 = new WebLabel("Delivered Quantity : ", SwingConstants.RIGHT);
 		l31.setFont(applyLabelFont());
 		actualQuantityText = new WebTextField(20);
-		actualQuantityText.setText(String.valueOf(data.getOrderedQuantity()));
+		if(data.getDeliveryData() == null) {
+			actualQuantityText.setText(String.valueOf(data.getOrderedQuantity()));
+		} else {
+			actualQuantityText.setText(String.valueOf(data.getDeliveryData().getActualDeliveryQuantity()));
+		}
 
 		WebLabel l4 = new WebLabel("Delivery Date : ", SwingConstants.RIGHT);
 		l4.setFont(applyLabelFont());
@@ -285,6 +298,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 	}
 
 	protected void updateDeliveryData(OrderEntryData data) {
+		LOG.info("updateDeliveryData :: Started");
 		DeliveryData delivery = new DeliveryData();
 		delivery.setOrderEntryData(data);
 		delivery.setDeliveryReceiptNo(receiptNoText.getText());
@@ -296,18 +310,34 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 		} else {
 			delivery.setActualDeliveryQuantity(Double.valueOf(actualQuantityText.getText()));
 		}
-
+		LOG.info("updateDeliveryData :: Order Entry Data set...");
 		data.setDeliveryData(delivery);
+		OrderService orderService = new DefaultOrderService();
+		
+		boolean exceptionOccured = false;
+		try {
+			orderService.updateOrderDelivery(data);
+		} catch(Exception e) {
+			exceptionOccured = true;
+		}
+		
+		
+		
 		if(getParentDialog() != null) {
 			if(getParentDialog() instanceof UpdateOrderDialog) {
+				LOG.info("updateDeliveryData :: Type - UpdateOrderDialog");
 				UpdateOrderDialog d = (UpdateOrderDialog) getParentDialog();
 				d.setCurrentOrder(data.getOrder());
 				d.notifyParent();
 			} else if(getParentDialog() instanceof SKAMainApp) {
+				LOG.info("updateDeliveryData :: Type - SKAMainApp");
 				SKAMainApp parent = (SKAMainApp) getParentDialog();
-				parent.showSuccessNotification();
-			}
-			
+				if(exceptionOccured) {
+					parent.showFaliureNotification();
+				} else {
+					parent.showSuccessNotification();
+				}
+			}			
 		}		
 		dispose();
 	}
@@ -316,7 +346,7 @@ public class UpdateOrderDeliveryDetailDialog extends BaseAppDialog {
 		return parentDialog;
 	}
 
-	public void setParentDialog(UpdateOrderDialog parentDialog) {
+	public void setParentDialog(Component parentDialog) {
 		this.parentDialog = parentDialog;
 	}
 

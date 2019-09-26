@@ -37,6 +37,7 @@ import com.alee.extended.time.WebClock;
 import com.alee.extended.window.WebPopOver;
 import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.button.WebButton;
+import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.filechooser.WebFileChooser;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.menu.WebMenu;
@@ -85,6 +86,7 @@ import com.saikrupa.app.dto.PaymentEntryData;
 import com.saikrupa.app.dto.PaymentStatus;
 import com.saikrupa.app.dto.ProductData;
 import com.saikrupa.app.dto.ReportSelectionData;
+import com.saikrupa.app.dto.VehicleData;
 import com.saikrupa.app.dto.VendorData;
 import com.saikrupa.app.service.VendorService;
 import com.saikrupa.app.service.impl.DefaultVendorService;
@@ -100,6 +102,7 @@ import com.saikrupa.app.service.report.impl.PendingDeliveryOrderReportService;
 import com.saikrupa.app.service.report.impl.PendingPaymentOrderReportService;
 import com.saikrupa.app.session.ApplicationSession;
 import com.saikrupa.app.ui.component.AppWebLabel;
+import com.saikrupa.app.ui.models.DeliveryVehicleModel;
 import com.saikrupa.app.ui.models.EmployeeTableModel;
 import com.saikrupa.app.ui.models.ExpenseTableModel;
 import com.saikrupa.app.ui.models.InventoryHistoryModel;
@@ -107,6 +110,7 @@ import com.saikrupa.app.ui.models.InvestorTableModel;
 import com.saikrupa.app.ui.models.OrderDeliveryTableModel;
 import com.saikrupa.app.ui.models.OrderTableModel;
 import com.saikrupa.app.ui.models.ProductTableModel;
+import com.saikrupa.app.ui.models.VehicleListCellRenderer;
 import com.saikrupa.app.ui.models.VendorTableModel;
 import com.saikrupa.app.ui.order.ManageOrderDialog;
 import com.saikrupa.app.ui.order.UpdateOrderDeliveryDetailDialog;
@@ -728,12 +732,15 @@ public class SKAMainApp extends WebFrame {
 	}
 	
 	private void showOrderDelivery(OrderData data) {
-		UpdateOrderDeliveryDetailDialog d = new UpdateOrderDeliveryDetailDialog(this, data.getOrderEntries().get(0));
+		OrderEntryData entryData = data.getOrderEntries().get(0);
+		LOG.info("showOrderDelivery :getOrderedQuantity : "+entryData.getDeliveryData().getActualDeliveryQuantity());
+		UpdateOrderDeliveryDetailDialog d = new UpdateOrderDeliveryDetailDialog(this, entryData);
 		d.setVisible(true);
 		
 	}
 	
 	private void displayOrderDeliveryScreen(ApplicationResourceBundle bundle) {
+		getContentPane().removeAll();
 		WebPanel contentPanel = new WebPanel(true);
 		contentPanel.setLayout(new BorderLayout());
 		
@@ -745,6 +752,9 @@ public class SKAMainApp extends WebFrame {
 
 		orderDeliveryContentTable.setRowHeight(35);
 		orderDeliveryContentTable.setFont(new Font("verdana", Font.PLAIN, 14));
+		
+		OrderDeliveryTableModel tableModel = (OrderDeliveryTableModel)orderDeliveryContentTable.getModel();
+		tableModel.fireTableDataChanged();
 
 		MouseListener mouseListener = new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
@@ -758,15 +768,38 @@ public class SKAMainApp extends WebFrame {
 				}
 			}			
 		};
-		orderDeliveryContentTable.addMouseListener(mouseListener);		
-
-		WebPanel bottomPanel = new WebPanel();
-		bottomPanel.setLayout(new BorderLayout());
+		orderDeliveryContentTable.addMouseListener(mouseListener);	
 		
-		WebButton button = new WebButton("Test this");
-		bottomPanel.add(button, BorderLayout.CENTER);
+		final WebLabel filterLable = new WebLabel();
+		filterLable.setText("Search By Vehicle : ");
+		filterLable.setFont(getLabelFont());
+		
+		final WebComboBox deliveryVehicleCombo = new WebComboBox(new DeliveryVehicleModel());
+		deliveryVehicleCombo.setRenderer(new VehicleListCellRenderer());
+		
+		
+		final WebButton searchDeliveryButton = new WebButton("Search");
+		searchDeliveryButton.setFont(getLabelFont());
+		searchDeliveryButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				VehicleData data = (VehicleData) deliveryVehicleCombo.getSelectedItem();
+				displayOrderDeliveryScreenByVehicle(data);
+				
+			}
+
+		});
+		
+
+		WebPanel basePanel = new WebPanel(true);
+		basePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+		basePanel.add(filterLable);
+		basePanel.add(deliveryVehicleCombo);	
+		basePanel.add(searchDeliveryButton);
+
+	
+		
 		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
-				bottomPanel);
+				basePanel);
 		splitPane.setOneTouchExpandable(true);
 		splitPane.setDividerLocation(200);
 		splitPane.setContinuousLayout(false);
@@ -774,6 +807,14 @@ public class SKAMainApp extends WebFrame {
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 		decorateSouthPanel();
 		revalidate();	
+	}
+	
+	private void displayOrderDeliveryScreenByVehicle(VehicleData data) {
+		OrderDeliveryDAO orderDeliveryDao = new DefaultOrderDeliveryDAO();
+		OrderDeliveryTableModel model = new OrderDeliveryTableModel(orderDeliveryDao.findOrderDeliveriesByVehicleCode(data.getCode()));
+		orderDeliveryContentTable.setModel(model);
+		model.fireTableDataChanged();
+
 	}
 
 	private void processChangePassword() {
@@ -1779,6 +1820,22 @@ public class SKAMainApp extends WebFrame {
 		clock.setTimePattern("'Operation Successfully executed !!!' ");
 		clock.setFont(new Font("Verdana", Font.BOLD, 14));
 		clock.setForeground(Color.BLACK);
+		notificationPopup.setContent(new GroupPanel(clock));
+		NotificationManager.showNotification(notificationPopup);
+		clock.start();
+	}
+	
+	public void showFaliureNotification() {
+		final WebNotification notificationPopup = new WebNotification();
+		notificationPopup.setIcon(NotificationIcon.minus);
+		notificationPopup.setDisplayTime(3000);
+
+		final WebClock clock = new WebClock();
+		clock.setClockType(ClockType.timer);
+		clock.setTimeLeft(3000);
+		clock.setTimePattern("'Operation resulted a failure' ");
+		clock.setFont(new Font("Verdana", Font.BOLD, 14));
+		clock.setForeground(Color.RED);
 		notificationPopup.setContent(new GroupPanel(clock));
 		NotificationManager.showNotification(notificationPopup);
 		clock.start();

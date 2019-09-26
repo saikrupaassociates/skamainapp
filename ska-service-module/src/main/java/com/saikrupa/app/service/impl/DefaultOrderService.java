@@ -346,4 +346,35 @@ public class DefaultOrderService implements OrderService {
 
 	}
 
+	public void updateOrderDelivery(OrderEntryData orderEntry) throws Exception {
+		LOG.info("updateOrderDelivery :: ["+orderEntry.getCode()+"] : - Now Updating...");
+		final String SQL_UPDATE_DELIVERY = "UPDATE COM_ORDER_DELIVERY SET DELIVERED_QUANTITY=?, DELIVERY_RECEIPT_NO=?, DELIVERY_DATE=?, VEHICLE_CODE=?, LAST_MODIFIED_BY=? WHERE CODE=?";
+		
+		PersistentManager manager = PersistentManager.getPersistentManager();
+		Connection connection = manager.getConnection();
+		
+		DeliveryData deliveryData = orderEntry.getDeliveryData();
+		try {
+			PreparedStatement statement = connection.prepareStatement(SQL_UPDATE_DELIVERY);
+			statement.setDouble(1, deliveryData.getActualDeliveryQuantity());
+			statement.setString(2, deliveryData.getDeliveryReceiptNo());
+			statement.setDate(3, new java.sql.Date(deliveryData.getDeliveryDate().getTime()));
+			statement.setInt(4, deliveryData.getDeliveryVehicle().getCode());
+			
+			ApplicationUserData currentUser = (ApplicationUserData) ApplicationSession.getSession()
+					.getCurrentUser();
+			statement.setString(5, currentUser.getUserId());			
+			statement.setInt(6,  orderEntry.getCode());
+
+			int count = statement.executeUpdate();
+			LOG.info("updateOrderDelivery :: ["+orderEntry.getCode()+"] : Records Updated : "+count);
+
+		} catch (SQLException e) {
+			LOG.error("updateOrderDelivery :: SQL Exception", e);
+			throw e;
+		} catch (Exception e) {
+			LOG.error("updateOrderDelivery :: Exception", e);
+			throw e;
+		}		
+	}
 }

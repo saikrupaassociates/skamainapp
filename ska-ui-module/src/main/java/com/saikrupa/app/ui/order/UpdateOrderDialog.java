@@ -14,6 +14,8 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 
+import org.apache.log4j.Logger;
+
 import com.alee.laf.button.WebButton;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.optionpane.WebOptionPane;
@@ -42,10 +44,12 @@ public class UpdateOrderDialog extends BaseAppDialog {
 	private static final long serialVersionUID = 1L;
 
 	private OrderData currentOrder;
-	
+
 	private SKAMainApp parentFrame;
-	
+
 	private boolean deliveryUpdatecancelled;
+	
+	private static final Logger LOG = Logger.getLogger(UpdateOrderDialog.class);
 
 	public UpdateOrderDialog(SKAMainApp sdMainApp, OrderData data) {
 		super(sdMainApp, true);
@@ -138,7 +142,7 @@ public class UpdateOrderDialog extends BaseAppDialog {
 
 		final WebLabel orderAmountLabel = new WebLabel(String.valueOf(data.getTotalPrice()));
 		orderAmountLabel.setFont(applyLabelFont());
-		//orderAmountLabel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
+		// orderAmountLabel.setBorder(BorderFactory.createLineBorder(Color.GREEN));
 
 		c.gridx = 3;
 		c.gridy = 0;
@@ -164,18 +168,15 @@ public class UpdateOrderDialog extends BaseAppDialog {
 
 		WebPanel paymentStatusPanel = new WebPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
 		paymentStatusPanel.add(paymentStatusLabel);
-		if(data.getPaymentStatus() == PaymentStatus.PAID) {
+		if (data.getPaymentStatus() == PaymentStatus.PAID) {
 			paymentStatusPanel.add(paymentStatusLookupBtn);
 		}
-		
 
 		c.gridx = 5;
 		c.gridy = 0;
 		c.insets = new Insets(10, 0, 10, 0); // Left padding
 		layout.setConstraints(paymentStatusPanel, c);
 		formPanel.add(paymentStatusPanel);
-
-		
 
 		WebLabel addressLabel = new WebLabel("Delivery Location :", SwingConstants.RIGHT);
 		addressLabel.setFont(applyLabelFont());
@@ -252,19 +253,35 @@ public class UpdateOrderDialog extends BaseAppDialog {
 		final WebButton cancelButton = new WebButton("Cancel");
 		cancelButton.setFont(applyLabelFont());
 
-		WebPanel buttonPanel = new WebPanel(new FlowLayout(FlowLayout.RIGHT, 20, 20));
-		buttonPanel.add(updateButton);
-		buttonPanel.add(cancelButton);
+		WebPanel updateButtonPanel = new WebPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+		updateButtonPanel.add(updateButton);
+		updateButtonPanel.add(cancelButton);
 
-//		c.gridx = 0;
-//		c.gridy = 3;
-//		c.anchor = GridBagConstraints.NORTH;
-//		c.insets = new Insets(10, 10, 10, 10); // Left padding
-//		c.gridwidth = 7;
-//		layout.setConstraints(buttonPanel, c);
-//		formPanel.add(buttonPanel);
+		WebPanel removeOrderPanel = new WebPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+		WebButton deleteOrderButton = new WebButton("Delete Order");
+		deleteOrderButton.setFont(applyLabelFont());
+		deleteOrderButton.setActionCommand("DELETE_ORDER");
+		removeOrderPanel.add(deleteOrderButton);
 		
-		if(data.getDeliveryStatus() == DeliveryStatus.SHIPPED) {
+		if(data.getOrderStatus() == OrderStatus.CREATED && data.getPaymentStatus() == PaymentStatus.PENDING) {
+			deleteOrderButton.setEnabled(Boolean.TRUE);
+		} else {
+			deleteOrderButton.setEnabled(Boolean.FALSE);
+		}
+
+		WebPanel buttonPanel = new WebPanel(new BorderLayout());
+		buttonPanel.add(removeOrderPanel, BorderLayout.WEST);
+		buttonPanel.add(updateButtonPanel, BorderLayout.EAST);
+
+		// c.gridx = 0;
+		// c.gridy = 3;
+		// c.anchor = GridBagConstraints.NORTH;
+		// c.insets = new Insets(10, 10, 10, 10); // Left padding
+		// c.gridwidth = 7;
+		// layout.setConstraints(buttonPanel, c);
+		// formPanel.add(buttonPanel);
+
+		if (data.getDeliveryStatus() == DeliveryStatus.SHIPPED) {
 			updateButton.setEnabled(Boolean.FALSE);
 		}
 
@@ -290,43 +307,54 @@ public class UpdateOrderDialog extends BaseAppDialog {
 						deliveryStatusLabel.setText(selected.toString());
 					}
 				} else if (e.getActionCommand().equalsIgnoreCase("UPDATE_ORDER")) {
-					if(!isDeliveryUpdatecancelled()) {
+					if (!isDeliveryUpdatecancelled()) {
 						updateOrderData(owner);
-					}										
+					}
 				} else if (e.getActionCommand().equalsIgnoreCase("CANCEL")) {
-					dispose(); 
+					dispose();
 				} else if (e.getActionCommand().equalsIgnoreCase("SHOW_DELIVERY_DETAIL")) {
 					displayDeliveryDetailDialog();
-					 
+				} else if(e.getActionCommand().equalsIgnoreCase("DELETE_ORDER")) {
+					validateAndDeleteOrder(data);
 				}
-			}			
+			}
+			
 		};
 
 		updateButton.addActionListener(listener);
 		cancelButton.addActionListener(listener);
 		deliveryStatusLookupBtn.addActionListener(listener);
 		paymentStatusLookupBtn.addActionListener(listener);
-		
-		if (data.getPaymentStatus() == PaymentStatus.PAID) {
+		deleteOrderButton.addActionListener(listener);
+
+		if (data.getPaymentStatus() == PaymentStatus.PAID || data.getPaymentStatus() == PaymentStatus.PARTIAL) {
 			paymentStatusLookupBtn.setIcon(createImageIcon("info.png"));
-			
+
 		}
 		if (data.getDeliveryStatus() == DeliveryStatus.SHIPPED) {
 			deliveryStatusLookupBtn.setIcon(createImageIcon("info.png"));
 			deliveryStatusLookupBtn.setActionCommand("SHOW_DELIVERY_DETAIL");
 			deliveryStatusLookupBtn.setToolTipText("Display Shipping Detail");
 		}
-		
+
 		if (data.getOrderStatus() == OrderStatus.COMPLETED) {
 			updateButton.setEnabled(false);
 		}
 
 		getContentPane().add(mainPanel, BorderLayout.CENTER);
-		getContentPane().add(buttonPanel, BorderLayout.SOUTH);		
+		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
 		// setResizable(false);
 	}
-	
+
+	private void validateAndDeleteOrder(OrderData data) {
+		int confirmed = WebOptionPane.showConfirmDialog(this, "Are you sure of deleting this Order ["+data.getCode()+"]?",
+				"Confirm", WebOptionPane.YES_NO_OPTION, WebOptionPane.QUESTION_MESSAGE);
+		if (confirmed == WebOptionPane.YES_OPTION) {
+			LOG.info("TO BE IMPLEMENTED - validateAndDeleteOrder");
+		}
+	}
+
 	private void displayPartialSplitPaymentDialog() {
 		lineDetailTable.setSelectedRow(0);
 		int selectedLine = lineDetailTable.getSelectedRow();
@@ -338,14 +366,15 @@ public class UpdateOrderDialog extends BaseAppDialog {
 		paymentStatusLabel.setText(getCurrentOrder().getPaymentStatus().name());
 		revalidate();
 	}
-	
+
 	private void displayDeliveryDetailDialog() {
-		DisplayOrderDeliveryInfoDialog dialog = new DisplayOrderDeliveryInfoDialog(this , getCurrentOrder().getOrderEntries().get(0));
+		DisplayOrderDeliveryInfoDialog dialog = new DisplayOrderDeliveryInfoDialog(this,
+				getCurrentOrder().getOrderEntries().get(0));
 		dialog.setVisible(true);
-		if(dialog.isCancelledOperation()) {
+		if (dialog.isCancelledOperation()) {
 			setDeliveryUpdatecancelled(true);
 		}
-		
+
 	}
 
 	private void displayUpdateDeliveryDetailDialog() {
@@ -355,7 +384,7 @@ public class UpdateOrderDialog extends BaseAppDialog {
 		OrderEntryData orderEntry = entryTableModel.getOrderEntryDataList().get(selectedLine);
 		UpdateOrderDeliveryDetailDialog dialog = new UpdateOrderDeliveryDetailDialog(this, orderEntry);
 		dialog.setVisible(true);
-		if(dialog.isCancelledOperation()) {
+		if (dialog.isCancelledOperation()) {
 			setDeliveryUpdatecancelled(true);
 		}
 	}
@@ -368,14 +397,16 @@ public class UpdateOrderDialog extends BaseAppDialog {
 			getCurrentOrder().setOrderStatus(OrderStatus.CONFIRMED);
 		}
 
-		if (getCurrentOrder().getPaymentStatus() == PaymentStatus.PENDING || getCurrentOrder().getPaymentStatus() == PaymentStatus.PARTIAL) {
+		if (getCurrentOrder().getPaymentStatus() == PaymentStatus.PENDING
+				|| getCurrentOrder().getPaymentStatus() == PaymentStatus.PARTIAL) {
 			getCurrentOrder().setOrderStatus(OrderStatus.CREATED);
 		}
 		if (getCurrentOrder().getDeliveryStatus() == DeliveryStatus.SHIPPED) {
 			getCurrentOrder().setOrderStatus(OrderStatus.DELIVERED);
 		}
 
-		if (getCurrentOrder().getDeliveryStatus() == DeliveryStatus.SHIPPED && getCurrentOrder().getPaymentStatus() == PaymentStatus.PAID) {
+		if (getCurrentOrder().getDeliveryStatus() == DeliveryStatus.SHIPPED
+				&& getCurrentOrder().getPaymentStatus() == PaymentStatus.PAID) {
 			getCurrentOrder().setOrderStatus(OrderStatus.COMPLETED);
 		}
 		processUpdateOrderEvent(owner);

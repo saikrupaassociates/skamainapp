@@ -8,7 +8,7 @@ import com.saikrupa.app.dto.OrderData;
 
 public interface OrderDeliveryDAO {
 	
-	public List<DeliveryData> findOrderDeliveriesByVehicleCode(final int vehicleCode);
+	public List<OrderData> findOrderDeliveriesByVehicleCode(final int vehicleCode);
 	public List<DeliveryData> findOrderDeliveriesByVehicleByDate(final int vehicleCode, final Date fromDate, final Date toDate);
 	public List<OrderData> findOrdersByVehicleCode(final int vehicleCode);
 	public List<OrderData> findOrdersByAllVehicles();

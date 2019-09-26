@@ -52,6 +52,7 @@ import com.alee.laf.text.WebPasswordField;
 import com.alee.laf.text.WebTextArea;
 import com.alee.laf.text.WebTextField;
 import com.alee.laf.text.WebTextPane;
+import com.alee.managers.glasspane.WebGlassPane;
 import com.alee.managers.hotkey.Hotkey;
 import com.alee.utils.SwingUtils;
 import com.github.sarxos.webcam.Webcam;
@@ -94,11 +95,18 @@ public class TestApp extends WebFrame {
 	
 	private void showSearchExpenseDialog() {
 		SKAMainApp app = new SKAMainApp();
+		WebGlassPane glassPane = new WebGlassPane();		
+		glassPane.setOpaque(true);		
+		app.setGlassPane(glassPane);
 		SearchExpenseDialog d = new SearchExpenseDialog(app);
 		d.setVisible(true);
 		if(!d.isVisible()) {
 			System.exit(0);
 		}
+	}
+	
+	private void showGlassPane() {
+		
 	}
 
 	private void createReportLookupScreen() {
