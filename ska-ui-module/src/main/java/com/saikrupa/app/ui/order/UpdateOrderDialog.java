@@ -168,7 +168,7 @@ public class UpdateOrderDialog extends BaseAppDialog {
 
 		WebPanel paymentStatusPanel = new WebPanel(new FlowLayout(FlowLayout.LEADING, 5, 0));
 		paymentStatusPanel.add(paymentStatusLabel);
-		if (data.getPaymentStatus() == PaymentStatus.PAID) {
+		if (data.getPaymentStatus() == PaymentStatus.PAID || data.getPaymentStatus() == PaymentStatus.PARTIAL) {
 			paymentStatusPanel.add(paymentStatusLookupBtn);
 		}
 

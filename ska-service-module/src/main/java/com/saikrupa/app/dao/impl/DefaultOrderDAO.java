@@ -88,7 +88,7 @@ public class DefaultOrderDAO implements OrderDAO {
 	
 	public List<OrderData> findOrdersByCustomer(Integer customerCode) {
 		List<OrderData> orderList = new ArrayList<OrderData>();
-		final String sql = "SELECT CODE, ORDER_STATUS, PAYMENT_STATUS, DELIVERY_STATUS, CUSTOMER_CODE, CREATED_DATE FROM COM_ORDER WHERE CUSTOMER_CODE = ? ORDER BY CREATED_DATE DESC";
+		final String sql = "SELECT CODE, ORDER_STATUS, PAYMENT_STATUS, DELIVERY_STATUS, CUSTOMER_CODE, CREATED_DATE FROM COM_ORDER WHERE CUSTOMER_CODE = ? ORDER BY CREATED_DATE ASC";
 
 		PersistentManager manager = PersistentManager.getPersistentManager();
 		Connection connection = manager.getConnection();
@@ -107,7 +107,7 @@ public class DefaultOrderDAO implements OrderDAO {
 				data.setCreatedDate((java.util.Date) rs.getDate(6));
 				data.setOrderEntries(getOrderEntries(data));
 				updateOrderTotalPrice(data);				
-				orderList.add(data);
+				orderList.add(data);				
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();

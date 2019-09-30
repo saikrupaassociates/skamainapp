@@ -17,7 +17,12 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.Box;
 import javax.swing.ImageIcon;
@@ -29,6 +34,7 @@ import javax.swing.table.TableModel;
 
 import org.apache.log4j.Logger;
 
+import com.alee.extended.date.WebDateField;
 import com.alee.extended.image.WebDecoratedImage;
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.extended.panel.GroupPanel;
@@ -37,6 +43,7 @@ import com.alee.extended.time.WebClock;
 import com.alee.extended.window.WebPopOver;
 import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.button.WebButton;
+import com.alee.laf.checkbox.WebCheckBox;
 import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.filechooser.WebFileChooser;
 import com.alee.laf.label.WebLabel;
@@ -78,6 +85,7 @@ import com.saikrupa.app.dto.CustomerData;
 import com.saikrupa.app.dto.DeliveryStatus;
 import com.saikrupa.app.dto.EmployeeData;
 import com.saikrupa.app.dto.ExpenseData;
+import com.saikrupa.app.dto.FilterParameter;
 import com.saikrupa.app.dto.InventoryEntryData;
 import com.saikrupa.app.dto.InvestorData;
 import com.saikrupa.app.dto.OrderData;
@@ -137,8 +145,10 @@ public class SKAMainApp extends WebFrame {
 	private WebLabel totalOrderValueLabel;
 	private WebLabel totalOrderCountLabel;
 
+	private WebLabel resultLabel;
+
 	private WebMenu profileMenu;
-	
+
 	private static Logger LOG = Logger.getLogger(SKAMainApp.class);
 
 	public SKAMainApp() {
@@ -150,7 +160,8 @@ public class SKAMainApp extends WebFrame {
 
 	private void init() {
 		if (!isDBConnectionOK()) {
-			LOG.warn("WARNING - Looks like Database server is not running. Please start the MySQL service and restart application");
+			LOG.warn(
+					"WARNING - Looks like Database server is not running. Please start the MySQL service and restart application");
 			WebOptionPane.showMessageDialog(this, "DB Connection not available");
 			System.exit(0);
 		}
@@ -170,7 +181,7 @@ public class SKAMainApp extends WebFrame {
 		try {
 			ExpenseDAO dao = new DefaultExpenseDAO();
 			dao.findAllExpenses();
-		} catch (Exception e) {			
+		} catch (Exception e) {
 			connected = false;
 		}
 		return connected;
@@ -258,8 +269,8 @@ public class SKAMainApp extends WebFrame {
 					} else {
 						ApplicationSession session = ApplicationSession.getSession();
 						session.setCurrentUser(userData);
-						getContentPane().remove(loginPanel);						
-						LOG.info("Logging in User : ["+userData.getUserId()+"]"+userData.getName());
+						getContentPane().remove(loginPanel);
+						LOG.info("Logging in User : [" + userData.getUserId() + "]" + userData.getName());
 						setupMenus();
 						decorateSouthPanel();
 						revalidate();
@@ -340,10 +351,10 @@ public class SKAMainApp extends WebFrame {
 		if (confirmed == WebOptionPane.YES_OPTION) {
 			PersistentManager manager = PersistentManager.getPersistentManager();
 			manager.closeConnection();
-			
-			ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();		
-			LOG.info("Logging off User : ["+loggedOnUser.getUserId()+"]"+loggedOnUser.getName());
-			
+
+			ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();
+			LOG.info("Logging off User : [" + loggedOnUser.getUserId() + "]" + loggedOnUser.getName());
+
 			System.exit(0);
 		} else {
 			setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -392,11 +403,10 @@ public class SKAMainApp extends WebFrame {
 		final WebMenu orderMenuItem = new WebMenu("Order");
 		orderMenuItem.setFont(getMenuFont());
 		orderMenuItem.setToolTipText("manage Order");
-		
+
 		final WebMenuItem orderDeliveryMenuItem = new WebMenuItem("Order Delivery");
 		orderDeliveryMenuItem.setFont(getMenuFont());
-		orderDeliveryMenuItem.setToolTipText("manage Order Delivery");		
-		
+		orderDeliveryMenuItem.setToolTipText("manage Order Delivery");
 
 		final WebMenuItem productMenuItem = new WebMenuItem("Product");
 		productMenuItem.setFont(getMenuFont());
@@ -446,7 +456,6 @@ public class SKAMainApp extends WebFrame {
 		manageMenu.add(orderMenuItem);
 		manageMenu.addSeparator();
 		manageMenu.add(orderDeliveryMenuItem);
-		
 
 		final WebMenuItem importOrderMenuItem = new WebMenuItem("Orders from Excel");
 		importOrderMenuItem.setFont(getMenuFont());
@@ -457,11 +466,19 @@ public class SKAMainApp extends WebFrame {
 		importInventoryMenuItem.setFont(getMenuFont());
 		importInventoryMenuItem.setToolTipText("Import Inventories from Excel file");
 		importInventoryMenuItem.setActionCommand("IMPORT_INVENTORIES");
+		
+		final WebMenuItem importExpenseMenuItem = new WebMenuItem("Expenses from Excel");
+		importExpenseMenuItem.setFont(getMenuFont());
+		importExpenseMenuItem.setToolTipText("Import Expenses from Excel file");
+		importExpenseMenuItem.setActionCommand("IMPORT_EXPENSES");
+		
+		
 
 		if (loggedOnUser.isAdmin()) {
 			importMenu.add(importOrderMenuItem);
 			importMenu.add(importInventoryMenuItem);
-		}		
+			importMenu.add(importExpenseMenuItem);
+		}
 
 		optionMenu.add(manageMenu);
 		optionMenu.addSeparator();
@@ -603,6 +620,7 @@ public class SKAMainApp extends WebFrame {
 		inventoryCustomMenuItem.addActionListener(actionListener());
 		importInventoryMenuItem.addActionListener(actionListener());
 		importOrderMenuItem.addActionListener(actionListener());
+		importExpenseMenuItem.addActionListener(actionListener());
 	}
 
 	private ActionListener actionListener() {
@@ -631,7 +649,7 @@ public class SKAMainApp extends WebFrame {
 						Integer[] params = new Integer[1];
 						params[0] = Integer.valueOf(customer.getCode());
 						displayOrderScreen(bundle, "MANAGE_ORDER_CUSTOMER", params);
-					} 
+					}
 				} else if (e.getActionCommand().equalsIgnoreCase("MANAGE_ORDER_DELIVERY")) {
 					displayOrderDeliveryScreen(bundle);
 				} else if (e.getActionCommand().equalsIgnoreCase("MANAGE_PRODUCT")) {
@@ -695,13 +713,15 @@ public class SKAMainApp extends WebFrame {
 					int selection = chooser.showOpenDialog(SKAMainApp.this);
 					if (selection == WebFileChooser.APPROVE_OPTION) {
 						String filepath = chooser.getSelectedFile().getAbsolutePath();
-						LOG.info("SKAMainApp - Inventory Import - File Selected : "+filepath);
+						LOG.info("SKAMainApp - Inventory Import - File Selected : " + filepath);
 						ImportService service = new ImportService("INVENTORY", filepath);
 						List<InventoryEntryData> newEntries = service.processInventoryImport();
-						if(newEntries.isEmpty()) {
-							WebOptionPane.showMessageDialog(SKAMainApp.this, "Inventories could not be imported. Please check Log.");
+						if (newEntries.isEmpty()) {
+							WebOptionPane.showMessageDialog(SKAMainApp.this,
+									"Inventories could not be imported. Please check Log.");
 						} else {
-							WebOptionPane.showMessageDialog(SKAMainApp.this, "["+newEntries.size()+"] Inventory entries got imported. ");
+							WebOptionPane.showMessageDialog(SKAMainApp.this,
+									"[" + newEntries.size() + "] Inventory entries got imported. ");
 						}
 					}
 				} else if (e.getActionCommand().equalsIgnoreCase("IMPORT_ORDERS")) {
@@ -716,13 +736,38 @@ public class SKAMainApp extends WebFrame {
 					int selection = chooser.showOpenDialog(SKAMainApp.this);
 					if (selection == WebFileChooser.APPROVE_OPTION) {
 						String filepath = chooser.getSelectedFile().getAbsolutePath();
-						LOG.info("SKAMainApp - File Selected : "+filepath);
+						LOG.info("SKAMainApp - File Selected : " + filepath);
 						ImportService service = new ImportService("ORDER", filepath);
 						List<com.saikrupa.app.dto.OrderData> newEntries = service.processOrderImport();
-						if(newEntries.isEmpty()) {
-							WebOptionPane.showMessageDialog(SKAMainApp.this, "Orders could not be imported. Please check Log.");
+						if (newEntries.isEmpty()) {
+							WebOptionPane.showMessageDialog(SKAMainApp.this,
+									"Orders could not be imported. Please check Log.");
 						} else {
-							WebOptionPane.showMessageDialog(SKAMainApp.this, "["+newEntries.size()+"] Orders imported. ");
+							WebOptionPane.showMessageDialog(SKAMainApp.this,
+									"[" + newEntries.size() + "] Orders imported. ");
+						}
+					}
+				} else if (e.getActionCommand().equalsIgnoreCase("IMPORT_EXPENSES")) {
+					WebFileChooser chooser = new WebFileChooser();
+					chooser.setMultiSelectionEnabled(false);
+					FileNameExtensionFilter filter = new FileNameExtensionFilter("EXCEL Files", "xlsx");
+					chooser.setFileFilter(filter);
+					chooser.setDialogTitle("Select Expense Import File");
+					chooser.setFileSelectionMode(WebFileChooser.FILES_ONLY);
+					chooser.setMultiSelectionEnabled(false);
+
+					int selection = chooser.showOpenDialog(SKAMainApp.this);
+					if (selection == WebFileChooser.APPROVE_OPTION) {
+						String filepath = chooser.getSelectedFile().getAbsolutePath();
+						LOG.info("SKAMainApp - File Selected : " + filepath);
+						ImportService service = new ImportService("EXPENSE", filepath);
+						List<com.saikrupa.app.dto.ExpenseData> expenseEntries = service.processExpenseImport();
+						if (expenseEntries.isEmpty()) {
+							WebOptionPane.showMessageDialog(SKAMainApp.this,
+									"Expenses could not be imported. Please check Log.");
+						} else {
+							WebOptionPane.showMessageDialog(SKAMainApp.this,
+									"[" + expenseEntries.size() + "] Expense entries imported. ");
 						}
 					}
 				}
@@ -730,30 +775,31 @@ public class SKAMainApp extends WebFrame {
 		};
 		return listener;
 	}
-	
+
 	private void showOrderDelivery(OrderData data) {
 		OrderEntryData entryData = data.getOrderEntries().get(0);
-		LOG.info("showOrderDelivery :getOrderedQuantity : "+entryData.getDeliveryData().getActualDeliveryQuantity());
+		LOG.info("showOrderDelivery :getOrderedQuantity : " + entryData.getDeliveryData().getActualDeliveryQuantity());
 		UpdateOrderDeliveryDetailDialog d = new UpdateOrderDeliveryDetailDialog(this, entryData);
 		d.setVisible(true);
-		
+
 	}
-	
+
 	private void displayOrderDeliveryScreen(ApplicationResourceBundle bundle) {
 		getContentPane().removeAll();
 		WebPanel contentPanel = new WebPanel(true);
 		contentPanel.setLayout(new BorderLayout());
-		
+
 		OrderDeliveryDAO orderDeliveryDao = new DefaultOrderDeliveryDAO();
-		orderDeliveryContentTable = new WebTable(new OrderDeliveryTableModel(orderDeliveryDao.findOrdersByAllVehicles()));		
+		orderDeliveryContentTable = new WebTable(
+				new OrderDeliveryTableModel(orderDeliveryDao.findOrdersByAllVehicles()));
 		contentPanel.add(new WebScrollPane(orderDeliveryContentTable));
 
 		orderDeliveryContentTable.getTableHeader().setFont(new Font("verdana", Font.BOLD, 14));
 
 		orderDeliveryContentTable.setRowHeight(35);
 		orderDeliveryContentTable.setFont(new Font("verdana", Font.PLAIN, 14));
-		
-		OrderDeliveryTableModel tableModel = (OrderDeliveryTableModel)orderDeliveryContentTable.getModel();
+
+		OrderDeliveryTableModel tableModel = (OrderDeliveryTableModel) orderDeliveryContentTable.getModel();
 		tableModel.fireTableDataChanged();
 
 		MouseListener mouseListener = new MouseAdapter() {
@@ -766,38 +812,218 @@ public class SKAMainApp extends WebFrame {
 						showOrderDelivery(data);
 					}
 				}
-			}			
+			}
 		};
-		orderDeliveryContentTable.addMouseListener(mouseListener);	
+		orderDeliveryContentTable.addMouseListener(mouseListener);
+
+		final WebPanel filteredPanel = new WebPanel();
+		GridBagLayout filteredLayout = new GridBagLayout();
+		filteredPanel.setLayout(filteredLayout);
+		GridBagConstraints filteredConstraints = new GridBagConstraints();
+		filteredConstraints.fill = GridBagConstraints.HORIZONTAL;
+
+		final WebCheckBox vehicleCB = new WebCheckBox("Vehicle");
+		vehicleCB.setActionCommand("BY_VEH");
+		vehicleCB.setFont(getLabelFont());
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 0;
+		filteredConstraints.insets = new Insets(0, 20, 10, 20);
+		filteredLayout.setConstraints(vehicleCB, filteredConstraints);
+		filteredPanel.add(vehicleCB);
+
+		final WebLabel vehicleNumberLabel = new WebLabel();
+		vehicleNumberLabel.setText("Number : ");
+		vehicleNumberLabel.setFont(getLabelFont());
 		
-		final WebLabel filterLable = new WebLabel();
-		filterLable.setText("Search By Vehicle : ");
-		filterLable.setFont(getLabelFont());
 		
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 1;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(vehicleNumberLabel, filteredConstraints);
+		filteredPanel.add(vehicleNumberLabel);
+
 		final WebComboBox deliveryVehicleCombo = new WebComboBox(new DeliveryVehicleModel());
 		deliveryVehicleCombo.setRenderer(new VehicleListCellRenderer());
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 1;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(deliveryVehicleCombo, filteredConstraints);
+		filteredPanel.add(deliveryVehicleCombo);
+
+		final WebCheckBox dateCB = new WebCheckBox("Delivery Date");
+		dateCB.setActionCommand("BY_DATE");
+		dateCB.setFont(getLabelFont());
 		
-		
+		Calendar currentDate = Calendar.getInstance();
+		Calendar fromDate = Calendar.getInstance();
+		fromDate.add(Calendar.DAY_OF_YEAR, -7);
+
+		final WebLabel tl1 = new WebLabel("From : ");
+		tl1.setFont(getLabelFont());
+		final WebDateField fromDateField = new WebDateField(fromDate.getTime());
+
+		final WebLabel tl2 = new WebLabel("To : ");
+		tl2.setFont(getLabelFont());
+		final WebDateField toDateField = new WebDateField(currentDate.getTime());
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 2;
+		filteredConstraints.gridwidth = 5;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(dateCB, filteredConstraints);
+		filteredPanel.add(dateCB);
+
+		filteredConstraints = new GridBagConstraints();
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(tl1, filteredConstraints);
+		filteredPanel.add(tl1);
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
+		filteredLayout.setConstraints(fromDateField, filteredConstraints);
+		filteredPanel.add(fromDateField);
+
+		filteredConstraints.gridx = 2;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(tl2, filteredConstraints);		
+		filteredPanel.add(tl2);
+
+		filteredConstraints.gridx = 3;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
+		filteredLayout.setConstraints(toDateField, filteredConstraints);
+		filteredPanel.add(toDateField);	
+
 		final WebButton searchDeliveryButton = new WebButton("Search");
+		searchDeliveryButton.setIcon(createImageIcon("search.png"));
 		searchDeliveryButton.setFont(getLabelFont());
-		searchDeliveryButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				VehicleData data = (VehicleData) deliveryVehicleCombo.getSelectedItem();
-				displayOrderDeliveryScreenByVehicle(data);
-				
+		searchDeliveryButton.setActionCommand("SEARCH_ENTRIES");
+		searchDeliveryButton.setEnabled(false);
+		
+		ActionListener l = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(e.getActionCommand().equalsIgnoreCase("SEARCH_ENTRIES")) {
+					resultLabel.setText("");
+					int selectionType = -1;
+					List<FilterParameter> filters = new ArrayList<FilterParameter>();
+					VehicleData data = (VehicleData) deliveryVehicleCombo.getSelectedItem();					
+					ReportSelectionData filterData = new ReportSelectionData();
+					if(vehicleCB.isSelected()) {
+						FilterParameter param = new FilterParameter();
+						param.setFilterName(vehicleCB.getActionCommand());
+						Map<String, Object> parameters = new HashMap<String, Object>();
+						parameters.put("VEHICLE_DATA", data);
+						param.setParameters(parameters);
+						filters.add(param);
+						selectionType = 1;
+					}
+					if(dateCB.isSelected()) {
+						FilterParameter param = new FilterParameter();
+						param.setFilterName(dateCB.getActionCommand());
+						Map<String, Object> parameters = new HashMap<String, Object>();
+						parameters.put("DATE_FROM", fromDateField.getDate());
+						parameters.put("DATE_TO", toDateField.getDate());
+						param.setParameters(parameters);
+						filters.add(param);
+						selectionType = 2;
+					}
+					if(vehicleCB.isSelected() && dateCB.isSelected()) {
+						selectionType = 3;
+					}
+					
+					if(!filters.isEmpty()) {
+						filterData.setFilters(filters);
+						filterData.setSelectionType(selectionType);
+					}					
+					displayOrderDeliveryScreenByFilter(filterData);
+				} else if(e.getActionCommand().equalsIgnoreCase("BY_VEH")) {
+					if(vehicleCB.isSelected()) {
+						deliveryVehicleCombo.setEnabled(Boolean.TRUE);
+						vehicleNumberLabel.setEnabled(true);
+						searchDeliveryButton.setEnabled(true);
+					} else {
+						deliveryVehicleCombo.setEnabled(false);
+						vehicleNumberLabel.setEnabled(false);
+						if(dateCB.isSelected()) {
+							searchDeliveryButton.setEnabled(true);
+						} else {
+							searchDeliveryButton.setEnabled(false);
+						}
+						
+					}
+					
+				} else if(e.getActionCommand().equalsIgnoreCase("BY_DATE")) {
+					if(dateCB.isSelected()) {
+						tl1.setEnabled(true);
+						tl2.setEnabled(true);
+						fromDateField.setEnabled(true);
+						toDateField.setEnabled(true);
+						searchDeliveryButton.setEnabled(true);
+					} else {
+						tl1.setEnabled(false);
+						tl2.setEnabled(false);
+						fromDateField.setEnabled(false);
+						toDateField.setEnabled(false);
+						if(vehicleCB.isSelected()) {
+							searchDeliveryButton.setEnabled(true);
+						} else {
+							searchDeliveryButton.setEnabled(false);
+						}
+					}					
+				}
 			}
-
-		});
+		};
+		searchDeliveryButton.addActionListener(l);
+		vehicleCB.addActionListener(l);
+		dateCB.addActionListener(l);
 		
-
-		WebPanel basePanel = new WebPanel(true);
-		basePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
-		basePanel.add(filterLable);
-		basePanel.add(deliveryVehicleCombo);	
-		basePanel.add(searchDeliveryButton);
-
-	
+		filteredConstraints = new GridBagConstraints();
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 4;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(searchDeliveryButton, filteredConstraints);
+		filteredPanel.add(searchDeliveryButton);
 		
+		filteredConstraints = new GridBagConstraints();
+		resultLabel = new WebLabel();
+		resultLabel.setFont(getLabelFont());
+		filteredConstraints.gridwidth = 5;
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 5;	
+		filteredConstraints.gridheight = 1;
+		filteredConstraints.weightx = 1;
+		filteredConstraints.anchor = GridBagConstraints.WEST;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(resultLabel, filteredConstraints);
+		filteredPanel.add(resultLabel);
+		
+		vehicleNumberLabel.setEnabled(Boolean.FALSE);
+		deliveryVehicleCombo.setEnabled(Boolean.FALSE);
+		fromDateField.setEnabled(Boolean.FALSE);
+		toDateField.setEnabled(Boolean.FALSE);
+		tl1.setEnabled(Boolean.FALSE);
+		tl2.setEnabled(Boolean.FALSE);
+		searchDeliveryButton.setEnabled(Boolean.FALSE);
+
+		WebPanel basePanel = new WebPanel(new FlowLayout(FlowLayout.LEFT));
+
+		WebPanel baseFilteredPanel = new WebPanel();
+		baseFilteredPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		baseFilteredPanel.add(filteredPanel);
+
+		WebPanel allFilteredPanel = new WebPanel();
+		allFilteredPanel.setLayout(new BorderLayout());
+		allFilteredPanel.add(baseFilteredPanel, BorderLayout.CENTER);
+
+		basePanel.add(allFilteredPanel);		
+
 		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
 				basePanel);
 		splitPane.setOneTouchExpandable(true);
@@ -806,13 +1032,16 @@ public class SKAMainApp extends WebFrame {
 
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 		decorateSouthPanel();
-		revalidate();	
+		revalidate();
 	}
-	
-	private void displayOrderDeliveryScreenByVehicle(VehicleData data) {
+
+	private void displayOrderDeliveryScreenByFilter(ReportSelectionData filterData) {
 		OrderDeliveryDAO orderDeliveryDao = new DefaultOrderDeliveryDAO();
-		OrderDeliveryTableModel model = new OrderDeliveryTableModel(orderDeliveryDao.findOrderDeliveriesByVehicleCode(data.getCode()));
+		OrderDeliveryTableModel model = new OrderDeliveryTableModel(
+				orderDeliveryDao.findOrderDeliveriesByFilters(filterData));
 		orderDeliveryContentTable.setModel(model);
+		model.fireTableDataChanged();
+		resultLabel.setText(model.getRowCount() + " Records Found");
 		model.fireTableDataChanged();
 
 	}
@@ -825,8 +1054,8 @@ public class SKAMainApp extends WebFrame {
 	private void processLogoff() {
 		getContentPane().removeAll();
 		menubar.removeAll();
-		ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();		
-		LOG.info("Logging off User : ["+loggedOnUser.getUserId()+"]"+loggedOnUser.getName());
+		ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();
+		LOG.info("Logging off User : [" + loggedOnUser.getUserId() + "]" + loggedOnUser.getName());
 		showLogin();
 		revalidate();
 	}
@@ -1342,7 +1571,6 @@ public class SKAMainApp extends WebFrame {
 
 	private void displayProductScreen(ApplicationResourceBundle bundle) {
 		getContentPane().removeAll();
-		
 
 		WebPanel contentPanel = new WebPanel(true);
 		contentPanel.setLayout(new BorderLayout());
@@ -1758,7 +1986,7 @@ public class SKAMainApp extends WebFrame {
 					WebLookAndFeel.setDecorateDialogs(true);
 
 					// Opening SDMainApp
-					SKAMainApp app = new SKAMainApp();					
+					SKAMainApp app = new SKAMainApp();
 					app.setSize(new Dimension(800, 700));
 					app.setResizable(true);
 					app.setVisible(true);
@@ -1824,7 +2052,7 @@ public class SKAMainApp extends WebFrame {
 		NotificationManager.showNotification(notificationPopup);
 		clock.start();
 	}
-	
+
 	public void showFaliureNotification() {
 		final WebNotification notificationPopup = new WebNotification();
 		notificationPopup.setIcon(NotificationIcon.minus);

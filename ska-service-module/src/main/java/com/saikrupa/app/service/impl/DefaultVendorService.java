@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import com.saikrupa.app.db.PersistentManager;
 import com.saikrupa.app.dto.AddressData;
 import com.saikrupa.app.dto.ContactPerson;
@@ -14,6 +16,8 @@ import com.saikrupa.app.dto.VendorData;
 import com.saikrupa.app.service.VendorService;
 
 public class DefaultVendorService implements VendorService {
+	
+	private static final Logger LOG = Logger.getLogger(DefaultVendorService.class);
 
 	public DefaultVendorService() {
 		// TODO Auto-generated constructor stub
@@ -62,7 +66,7 @@ public class DefaultVendorService implements VendorService {
 				cp.setCode(code);
 				cp.setVendor(vendorData);
 
-				final String SQL_CREATE_CONTACT_ADDRESS = "insert into address "
+				final String SQL_CREATE_CONTACT_ADDRESS = "INSERT INTO ADDRESS "
 						+ " (ADDRESS_LINE1, ADDRESS_LINE2, ADDRESS_LINE3, ADDRESS_LANDMARK, CONTACT_PERSON_CODE) "
 						+ " values(?,?,?,?,?)";
 				PreparedStatement addressStatement = connection.prepareStatement(SQL_CREATE_CONTACT_ADDRESS,
@@ -87,7 +91,6 @@ public class DefaultVendorService implements VendorService {
 	}
 
 	public VendorData updateVendor(VendorData vendorData) throws Exception {
-		System.out.println("Now updateVendor...");
 		final String SQL_UPDATE_VENDOR = "UPDATE VENDOR SET NAME=?, CONTACT_PRIMARY=?, CONTACT_SECONDARY=? WHERE CODE=?";
 
 		final String SQL_REMOVE_CONTACT = "DELETE FROM CONTACT_PERSON WHERE VENDOR_CODE=?";
@@ -109,7 +112,7 @@ public class DefaultVendorService implements VendorService {
 			for(ContactPerson p : currentList) {
 				statement.setString(1, p.getCode());
 				int count = statement.executeUpdate();
-				System.out.println("Removed ["+count+"] Addresses from Vendor CP ["+p.getName()+"]");				
+				LOG.info("Removed ["+count+"] Addresses from Vendor CP ["+p.getName()+"]");				
 			}
 			
 			
@@ -160,7 +163,7 @@ public class DefaultVendorService implements VendorService {
 				}
 			}
 			connection.commit();
-			System.out.println("Commited and Updated Vendor - "+vendorData.getName());
+			LOG.info("Commited and Updated Vendor - "+vendorData.getName());
 			return findVendorByCode(vendorData.getCode());
 		} catch (Exception e) {
 			e.printStackTrace();

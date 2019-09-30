@@ -52,7 +52,6 @@ import com.alee.laf.text.WebPasswordField;
 import com.alee.laf.text.WebTextArea;
 import com.alee.laf.text.WebTextField;
 import com.alee.laf.text.WebTextPane;
-import com.alee.managers.glasspane.WebGlassPane;
 import com.alee.managers.hotkey.Hotkey;
 import com.alee.utils.SwingUtils;
 import com.github.sarxos.webcam.Webcam;
@@ -63,9 +62,11 @@ import com.saikrupa.app.dto.OrderData;
 import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.OrderStatus;
 import com.saikrupa.app.dto.PaymentEntryData;
+import com.saikrupa.app.dto.VehicleData;
 import com.saikrupa.app.dto.VendorData;
 import com.saikrupa.app.ui.component.AppTextField;
 import com.saikrupa.app.ui.models.DeliveryStatusModel;
+import com.saikrupa.app.ui.models.DeliveryVehicleModel;
 import com.saikrupa.app.ui.models.ExpenseTypeListCellRenderer;
 import com.saikrupa.app.ui.models.ExpenseTypeModel;
 import com.saikrupa.app.ui.models.InvestmentTableModel;
@@ -75,6 +76,7 @@ import com.saikrupa.app.ui.models.OrderEntryTableModel;
 import com.saikrupa.app.ui.models.PaymentEntryTableModel;
 import com.saikrupa.app.ui.models.PaymentStatusModel;
 import com.saikrupa.app.ui.models.PaymentTypeModel;
+import com.saikrupa.app.ui.models.VehicleListCellRenderer;
 import com.saikrupa.app.ui.models.paymentTypeListCellRenderer;
 
 public class TestApp extends WebFrame {
@@ -90,23 +92,20 @@ public class TestApp extends WebFrame {
 
 	public TestApp() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		showSearchExpenseDialog();
+		createDeliveryFilterPanel();
 	}
-	
+
 	private void showSearchExpenseDialog() {
-		SKAMainApp app = new SKAMainApp();
-		WebGlassPane glassPane = new WebGlassPane();		
-		glassPane.setOpaque(true);		
-		app.setGlassPane(glassPane);
+		SKAMainApp app = new SKAMainApp();		
 		SearchExpenseDialog d = new SearchExpenseDialog(app);
 		d.setVisible(true);
-		if(!d.isVisible()) {
+		if (!d.isVisible()) {
 			System.exit(0);
 		}
 	}
-	
+
 	private void showGlassPane() {
-		
+
 	}
 
 	private void createReportLookupScreen() {
@@ -356,7 +355,7 @@ public class TestApp extends WebFrame {
 		c.fill = GridBagConstraints.HORIZONTAL;
 
 		WebRadioButton consolidatedRadio = new WebRadioButton("Consolidated", true);
-		consolidatedRadio.setActionCommand("CONSOLIDATED");		
+		consolidatedRadio.setActionCommand("CONSOLIDATED");
 
 		WebRadioButton filterRadio = new WebRadioButton("Filtered", true);
 		filterRadio.setActionCommand("FILTERED");
@@ -379,21 +378,21 @@ public class TestApp extends WebFrame {
 		filteredConstraints.fill = GridBagConstraints.HORIZONTAL;
 
 		final WebCheckBox dateCB = new WebCheckBox("Expense Date");
-		dateCB.setActionCommand("BY_DATE");		
-		
+		dateCB.setActionCommand("BY_DATE");
+
 		final WebCheckBox categoryCB = new WebCheckBox("Category");
-		categoryCB.setActionCommand("BY_CAT");		
+		categoryCB.setActionCommand("BY_CAT");
 		WebTextField tf1 = new WebTextField(20);
 
 		final WebCheckBox payeeCB = new WebCheckBox("Payee");
-		payeeCB.setActionCommand("BY_PAYEE");		
+		payeeCB.setActionCommand("BY_PAYEE");
 		WebTextField tf2 = new WebTextField(20);
 
 		WebLabel tl1 = new WebLabel("From :");
-		final WebDateField fromDateField = new WebDateField(new Date());		
+		final WebDateField fromDateField = new WebDateField(new Date());
 
 		WebLabel tl2 = new WebLabel("To :");
-		final WebDateField toDateField = new WebDateField(new Date());		
+		final WebDateField toDateField = new WebDateField(new Date());
 
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 0;
@@ -468,18 +467,18 @@ public class TestApp extends WebFrame {
 
 		ActionListener l = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if("CONSOLIDATED".equalsIgnoreCase(e.getActionCommand())) {
+				if ("CONSOLIDATED".equalsIgnoreCase(e.getActionCommand())) {
 					dateCB.setEnabled(false);
 					categoryCB.setEnabled(false);
 					payeeCB.setEnabled(false);
-					
+
 					fromDateField.setEnabled(false);
 					toDateField.setEnabled(false);
-				} else if("FILTERED".equalsIgnoreCase(e.getActionCommand())) {
+				} else if ("FILTERED".equalsIgnoreCase(e.getActionCommand())) {
 					dateCB.setEnabled(true);
 					categoryCB.setEnabled(true);
 					payeeCB.setEnabled(true);
-					
+
 					fromDateField.setEnabled(true);
 					toDateField.setEnabled(true);
 				}
@@ -492,13 +491,144 @@ public class TestApp extends WebFrame {
 		payeeCB.addActionListener(l);
 		okButton.addActionListener(l);
 		cancelButton.addActionListener(l);
-		
+
 		filterRadio.setSelected(true);
-		
-		
 
 		getContentPane().add(formPanel, BorderLayout.CENTER);
 		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+		pack();
+		setVisible(true);
+	}
+	
+	
+	private void createDeliveryFilterPanel() {
+		final WebPanel filteredPanel = new WebPanel();
+		GridBagLayout filteredLayout = new GridBagLayout();
+		filteredPanel.setLayout(filteredLayout);
+		GridBagConstraints filteredConstraints = new GridBagConstraints();
+		filteredConstraints.fill = GridBagConstraints.HORIZONTAL;
+		
+		final WebCheckBox vehicleCB = new WebCheckBox("Vehicle");
+		vehicleCB.setActionCommand("BY_VEH");	
+		
+		filteredConstraints.gridwidth = 4;
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 0;
+		filteredConstraints.insets = new Insets(0, 20, 10, 20);
+		filteredLayout.setConstraints(vehicleCB, filteredConstraints);
+		filteredPanel.add(vehicleCB);
+		
+		filteredConstraints = new GridBagConstraints();
+		
+		final WebLabel vehicleNumberLabel = new WebLabel();
+		vehicleNumberLabel.setText("Number : ");
+		
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 1;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(vehicleNumberLabel, filteredConstraints);
+		filteredPanel.add(vehicleNumberLabel);
+		
+		final WebComboBox deliveryVehicleCombo = new WebComboBox(new DeliveryVehicleModel());
+		deliveryVehicleCombo.setRenderer(new VehicleListCellRenderer());
+		
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 1;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(deliveryVehicleCombo, filteredConstraints);
+		filteredPanel.add(deliveryVehicleCombo);	
+		
+
+		final WebCheckBox dateCB = new WebCheckBox("Delivery Date");
+		dateCB.setActionCommand("BY_DATE");		
+
+		WebLabel tl1 = new WebLabel("From : ");
+		final WebDateField fromDateField = new WebDateField(new Date());
+
+		WebLabel tl2 = new WebLabel("To : ");
+		final WebDateField toDateField = new WebDateField(new Date());
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 2;
+		filteredConstraints.gridwidth = 4;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(dateCB, filteredConstraints);
+		filteredPanel.add(dateCB);
+
+		filteredConstraints = new GridBagConstraints();
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(tl1, filteredConstraints);
+		filteredPanel.add(tl1);
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
+		filteredLayout.setConstraints(fromDateField, filteredConstraints);
+		filteredPanel.add(fromDateField);
+
+		filteredConstraints.gridx = 2;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(tl2, filteredConstraints);		
+		filteredPanel.add(tl2);
+
+		filteredConstraints.gridx = 3;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
+		filteredLayout.setConstraints(toDateField, filteredConstraints);
+		filteredPanel.add(toDateField);	
+		
+		
+		final WebButton searchDeliveryButton = new WebButton("Search");		
+		
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 4;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(searchDeliveryButton, filteredConstraints);
+		filteredPanel.add(searchDeliveryButton);
+		
+	
+		
+		WebLabel resultLabel = new WebLabel();
+
+		WebPanel basePanel = new WebPanel(new FlowLayout(FlowLayout.LEFT));
+		
+		WebPanel baseFilteredPanel = new WebPanel();
+		baseFilteredPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		baseFilteredPanel.add(filteredPanel);	
+		
+		WebPanel labelPanel = new WebPanel();
+		labelPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		labelPanel.add(resultLabel);
+		
+		WebPanel allFilteredPanel = new WebPanel();
+		allFilteredPanel.setLayout(new BorderLayout());
+		allFilteredPanel.add(baseFilteredPanel, BorderLayout.CENTER);		
+		allFilteredPanel.add(labelPanel, BorderLayout.SOUTH);
+		
+		basePanel.add(allFilteredPanel);
+		
+//		basePanelConstraints.gridx = 0;
+//		basePanelConstraints.gridy = 0;
+//		basePanelConstraints.insets = new Insets(0, 20, 10, 20);
+//		basePanelLayout.setConstraints(filteredPanel, basePanelConstraints);
+//		basePanel.add(filteredPanel);
+		
+//		basePanelConstraints.gridx = 1;
+//		basePanelConstraints.gridy = 0;
+//		basePanelConstraints.insets = new Insets(0, 20, 10, 20);
+//		basePanelLayout.setConstraints(searchDeliveryButton, basePanelConstraints);
+//		basePanel.add(searchDeliveryButton);
+		
+//		basePanelConstraints.gridx = 1;
+//		basePanelConstraints.gridy = 1;
+//		basePanelConstraints.insets = new Insets(0, 20, 10, 20);
+//		basePanelLayout.setConstraints(resultLabel, basePanelConstraints);
+//		basePanel.add(resultLabel);		
+
+		getContentPane().add(basePanel, BorderLayout.CENTER);
 		pack();
 		setVisible(true);
 	}
@@ -2296,6 +2426,7 @@ public class TestApp extends WebFrame {
 	}
 
 	public static void main(String[] args) {
+
 		try {
 			SwingUtilities.invokeLater(new Runnable() {
 				public void run() {
@@ -2312,6 +2443,33 @@ public class TestApp extends WebFrame {
 			System.out.println("Unable to load WebLookAndFeel...");
 		}
 
+	}
+}
+
+class MyTest {
+	String name;
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	int age;
+
+	public int getAge() {
+		return age;
+	}
+
+	public void setAge(int age) {
+		this.age = age;
+	}
+
+	@Override
+	public String toString() {
+		return name + " -- " + age;
 	}
 
 }

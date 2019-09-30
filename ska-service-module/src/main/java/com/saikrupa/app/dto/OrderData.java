@@ -11,7 +11,7 @@ public class OrderData {
 		return getCode() + " || " + getTotalPrice() + " || "
 				+ (getPaymentStatus() == null ? "N/A" : getPaymentStatus().toString()) + " || "
 				+ (getDeliveryStatus() == null ? "N/A" : getDeliveryStatus().toString()) + " || "
-				+ (getOrderStatus() == null ? "N/A" : getOrderStatus().toString());
+				+ (getOrderStatus() == null ? "N/A" : getOrderStatus().toString() + "|| " + getCreatedDate());
 	}
 
 	private List<OrderEntryData> orderEntries;
@@ -25,7 +25,7 @@ public class OrderData {
 
 	private String code;
 	private Date createdDate;
-	private Date lastModifiedDate;	
+	private Date lastModifiedDate;
 
 	public OrderData() {
 		orderEntries = new ArrayList<OrderEntryData>();

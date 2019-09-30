@@ -12,6 +12,8 @@ import java.util.Calendar;
 import javax.swing.BorderFactory;
 import javax.swing.SwingConstants;
 
+import org.apache.log4j.Logger;
+
 import com.alee.extended.date.WebDateField;
 import com.alee.extended.layout.VerticalFlowLayout;
 import com.alee.extended.panel.GroupPanel;
@@ -45,6 +47,8 @@ public class ManageProductDialog extends BaseAppDialog {
 	
 	private static final long serialVersionUID = 1L;
 	
+	private static final Logger LOG = Logger.getLogger(ManageProductDialog.class);
+	
 	public ManageProductDialog(SKAMainApp sdMainApp, ProductData data) {
 		super(sdMainApp, true);
 		setTitle("View / Update Product");
@@ -58,6 +62,7 @@ public class ManageProductDialog extends BaseAppDialog {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	private void buildGUI(final SKAMainApp owner, final ProductData data) {
 		WebPanel formPanel = new WebPanel();
 		formPanel.setBorder(BorderFactory.createRaisedSoftBevelBorder());
@@ -231,10 +236,6 @@ public class ManageProductDialog extends BaseAppDialog {
 		l9.setFont(applyLabelFont());
 		
 		ProductionMachineModel model = new ProductionMachineModel();
-//		DefaultComboBoxModel<String> model = new DefaultComboBoxModel<String>();
-//		model.addElement("Machine 1 - Automatic");
-//		model.addElement("Machine 2 - Automatic");
-//		model.addElement("Machine 3 - Egg Laying");
 		final WebComboBox machineListCombo = new WebComboBox(model);
 		machineListCombo.setRenderer(new ProductionMachineListCellRenderer());
 		
@@ -313,7 +314,7 @@ public class ManageProductDialog extends BaseAppDialog {
 							cal.add(Calendar.SECOND, 59);
 							entryData.setCreatedDate(cal.getTime());
 							
-							System.out.println("Product : "+entryData.getInventory().getProduct().getCode()+" added with Quantity : "+entryData.getAddedQuantity() +" On Date : "+entryData.getCreatedDate());
+							LOG.info("Product ["+entryData.getInventory().getProduct().getCode()+"] added with Quantity : "+entryData.getAddedQuantity() +" On Date : "+entryData.getCreatedDate());
 							processUpdateProductEvent(entryData, owner);
 						}
 					}

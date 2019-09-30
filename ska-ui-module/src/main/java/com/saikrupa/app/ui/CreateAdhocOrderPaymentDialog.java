@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +31,6 @@ import com.alee.laf.rootpane.WebDialog;
 import com.alee.laf.scroll.WebScrollPane;
 import com.alee.laf.table.WebTable;
 import com.alee.laf.text.WebTextField;
-import com.alee.utils.CollectionUtils;
 import com.saikrupa.app.dao.OrderDAO;
 import com.saikrupa.app.dao.impl.CustomerDAO;
 import com.saikrupa.app.dao.impl.DefaultCustomerDAO;
@@ -310,6 +310,8 @@ public class CreateAdhocOrderPaymentDialog extends BaseAppDialog {
 		List<OrderData> currentCustomerOrders = orderDAO
 				.findOrdersByCustomer(Integer.valueOf(getCurrentCustomer().getCode()));
 		List<PaymentEntryData> partialPaymentsToConsider = null;
+		Collections.reverse(currentCustomerOrders);
+		
 		for (OrderData order : currentCustomerOrders) {
 			if (order.getPaymentStatus() == PaymentStatus.PARTIAL) {
 				partialPaymentsToConsider = evaluatePaymentForPartialEntries(order);
