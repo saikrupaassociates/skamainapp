@@ -162,6 +162,7 @@ public class DefaultOrderService implements OrderService {
 				if (!deliveryEntryExists(entry, connection)) {
 					createDeliveryEntry(entryDeliveryData, entry, connection);
 				}
+				
 			}
 		}
 	}

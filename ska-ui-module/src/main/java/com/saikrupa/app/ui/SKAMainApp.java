@@ -17,9 +17,9 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,10 +109,13 @@ import com.saikrupa.app.service.report.impl.OrderByCustomerGroupReportService;
 import com.saikrupa.app.service.report.impl.PendingDeliveryOrderReportService;
 import com.saikrupa.app.service.report.impl.PendingPaymentOrderReportService;
 import com.saikrupa.app.session.ApplicationSession;
+import com.saikrupa.app.ui.component.AppTextField;
 import com.saikrupa.app.ui.component.AppWebLabel;
 import com.saikrupa.app.ui.models.DeliveryVehicleModel;
 import com.saikrupa.app.ui.models.EmployeeTableModel;
 import com.saikrupa.app.ui.models.ExpenseTableModel;
+import com.saikrupa.app.ui.models.ExpenseTypeListCellRenderer;
+import com.saikrupa.app.ui.models.ExpenseTypeModel;
 import com.saikrupa.app.ui.models.InventoryHistoryModel;
 import com.saikrupa.app.ui.models.InvestorTableModel;
 import com.saikrupa.app.ui.models.OrderDeliveryTableModel;
@@ -144,6 +147,8 @@ public class SKAMainApp extends WebFrame {
 	private WebLabel totalOrderPaidValueLabel;
 	private WebLabel totalOrderValueLabel;
 	private WebLabel totalOrderCountLabel;
+
+	private AppTextField paidToText;
 
 	private WebLabel resultLabel;
 
@@ -353,8 +358,9 @@ public class SKAMainApp extends WebFrame {
 			manager.closeConnection();
 
 			ApplicationUserData loggedOnUser = ApplicationSession.getSession().getCurrentUser();
-			LOG.info("Logging off User : [" + loggedOnUser.getUserId() + "]" + loggedOnUser.getName());
-
+			if(loggedOnUser != null) {
+				LOG.info("Logging off User : [" + loggedOnUser.getUserId() + "] : " + loggedOnUser.getName());
+			}
 			System.exit(0);
 		} else {
 			setDefaultCloseOperation(javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -466,18 +472,17 @@ public class SKAMainApp extends WebFrame {
 		importInventoryMenuItem.setFont(getMenuFont());
 		importInventoryMenuItem.setToolTipText("Import Inventories from Excel file");
 		importInventoryMenuItem.setActionCommand("IMPORT_INVENTORIES");
-		
+
 		final WebMenuItem importExpenseMenuItem = new WebMenuItem("Expenses from Excel");
 		importExpenseMenuItem.setFont(getMenuFont());
 		importExpenseMenuItem.setToolTipText("Import Expenses from Excel file");
 		importExpenseMenuItem.setActionCommand("IMPORT_EXPENSES");
-		
-		
 
 		if (loggedOnUser.isAdmin()) {
 			importMenu.add(importOrderMenuItem);
 			importMenu.add(importInventoryMenuItem);
 			importMenu.add(importExpenseMenuItem);
+			// importMenu.add(balancesheetMenuItem);
 		}
 
 		optionMenu.add(manageMenu);
@@ -565,12 +570,17 @@ public class SKAMainApp extends WebFrame {
 		inventoryCustomMenuItem.setToolTipText("Search based on Selection");
 		inventoryReportItem.add(inventoryCustomMenuItem);
 		inventoryCustomMenuItem.setActionCommand("REPORT_INVENTORY");
-
 		reportMenu.add(inventoryReportItem);
+
+		final WebMenuItem balancesheetMenuItem = new WebMenuItem("Balance sheet");
+		balancesheetMenuItem.setFont(getMenuFont());
+		balancesheetMenuItem.setToolTipText("Search based on Selection");
+		balancesheetMenuItem.setActionCommand("BALANCE_SHEET");
 
 		menubar.add(optionMenu);
 		if (loggedOnUser.isAdmin()) {
 			menubar.add(reportMenu);
+			reportMenu.add(balancesheetMenuItem);
 		}
 
 		menubar.add(Box.createHorizontalGlue());
@@ -621,6 +631,7 @@ public class SKAMainApp extends WebFrame {
 		importInventoryMenuItem.addActionListener(actionListener());
 		importOrderMenuItem.addActionListener(actionListener());
 		importExpenseMenuItem.addActionListener(actionListener());
+		balancesheetMenuItem.addActionListener(actionListener());
 	}
 
 	private ActionListener actionListener() {
@@ -770,10 +781,27 @@ public class SKAMainApp extends WebFrame {
 									"[" + expenseEntries.size() + "] Expense entries imported. ");
 						}
 					}
+				} else if ("BALANCE_SHEET".equalsIgnoreCase(e.getActionCommand())) {
+					DateSelectionDialog d = new DateSelectionDialog(SKAMainApp.this);
+					d.setVisible(true);
+					if (!d.isVisible()) {
+						Map<String, String> selectionMap = d.getSelectionMap();
+						if (selectionMap == null || selectionMap.isEmpty()) {
+							return;
+						} else {
+							generateReport(selectionMap);
+						}
+
+					}
 				}
 			}
+
 		};
 		return listener;
+	}
+
+	private void generateReport(Map<String, String> selectionMap) {
+
 	}
 
 	private void showOrderDelivery(OrderData data) {
@@ -835,8 +863,6 @@ public class SKAMainApp extends WebFrame {
 		final WebLabel vehicleNumberLabel = new WebLabel();
 		vehicleNumberLabel.setText("Number : ");
 		vehicleNumberLabel.setFont(getLabelFont());
-		
-		
 
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 1;
@@ -856,7 +882,7 @@ public class SKAMainApp extends WebFrame {
 		final WebCheckBox dateCB = new WebCheckBox("Delivery Date");
 		dateCB.setActionCommand("BY_DATE");
 		dateCB.setFont(getLabelFont());
-		
+
 		Calendar currentDate = Calendar.getInstance();
 		Calendar fromDate = Calendar.getInstance();
 		fromDate.add(Calendar.DAY_OF_YEAR, -7);
@@ -885,37 +911,37 @@ public class SKAMainApp extends WebFrame {
 
 		filteredConstraints.gridx = 1;
 		filteredConstraints.gridy = 3;
-		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
 		filteredLayout.setConstraints(fromDateField, filteredConstraints);
 		filteredPanel.add(fromDateField);
 
 		filteredConstraints.gridx = 2;
 		filteredConstraints.gridy = 3;
 		filteredConstraints.insets = new Insets(0, 30, 10, 0);
-		filteredLayout.setConstraints(tl2, filteredConstraints);		
+		filteredLayout.setConstraints(tl2, filteredConstraints);
 		filteredPanel.add(tl2);
 
 		filteredConstraints.gridx = 3;
 		filteredConstraints.gridy = 3;
-		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
 		filteredLayout.setConstraints(toDateField, filteredConstraints);
-		filteredPanel.add(toDateField);	
+		filteredPanel.add(toDateField);
 
 		final WebButton searchDeliveryButton = new WebButton("Search");
 		searchDeliveryButton.setIcon(createImageIcon("search.png"));
 		searchDeliveryButton.setFont(getLabelFont());
 		searchDeliveryButton.setActionCommand("SEARCH_ENTRIES");
 		searchDeliveryButton.setEnabled(false);
-		
+
 		ActionListener l = new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(e.getActionCommand().equalsIgnoreCase("SEARCH_ENTRIES")) {
+				if (e.getActionCommand().equalsIgnoreCase("SEARCH_ENTRIES")) {
 					resultLabel.setText("");
 					int selectionType = -1;
 					List<FilterParameter> filters = new ArrayList<FilterParameter>();
-					VehicleData data = (VehicleData) deliveryVehicleCombo.getSelectedItem();					
+					VehicleData data = (VehicleData) deliveryVehicleCombo.getSelectedItem();
 					ReportSelectionData filterData = new ReportSelectionData();
-					if(vehicleCB.isSelected()) {
+					if (vehicleCB.isSelected()) {
 						FilterParameter param = new FilterParameter();
 						param.setFilterName(vehicleCB.getActionCommand());
 						Map<String, Object> parameters = new HashMap<String, Object>();
@@ -924,7 +950,7 @@ public class SKAMainApp extends WebFrame {
 						filters.add(param);
 						selectionType = 1;
 					}
-					if(dateCB.isSelected()) {
+					if (dateCB.isSelected()) {
 						FilterParameter param = new FilterParameter();
 						param.setFilterName(dateCB.getActionCommand());
 						Map<String, Object> parameters = new HashMap<String, Object>();
@@ -934,33 +960,33 @@ public class SKAMainApp extends WebFrame {
 						filters.add(param);
 						selectionType = 2;
 					}
-					if(vehicleCB.isSelected() && dateCB.isSelected()) {
+					if (vehicleCB.isSelected() && dateCB.isSelected()) {
 						selectionType = 3;
 					}
-					
-					if(!filters.isEmpty()) {
+
+					if (!filters.isEmpty()) {
 						filterData.setFilters(filters);
 						filterData.setSelectionType(selectionType);
-					}					
+					}
 					displayOrderDeliveryScreenByFilter(filterData);
-				} else if(e.getActionCommand().equalsIgnoreCase("BY_VEH")) {
-					if(vehicleCB.isSelected()) {
+				} else if (e.getActionCommand().equalsIgnoreCase("BY_VEH")) {
+					if (vehicleCB.isSelected()) {
 						deliveryVehicleCombo.setEnabled(Boolean.TRUE);
 						vehicleNumberLabel.setEnabled(true);
 						searchDeliveryButton.setEnabled(true);
 					} else {
 						deliveryVehicleCombo.setEnabled(false);
 						vehicleNumberLabel.setEnabled(false);
-						if(dateCB.isSelected()) {
+						if (dateCB.isSelected()) {
 							searchDeliveryButton.setEnabled(true);
 						} else {
 							searchDeliveryButton.setEnabled(false);
 						}
-						
+
 					}
-					
-				} else if(e.getActionCommand().equalsIgnoreCase("BY_DATE")) {
-					if(dateCB.isSelected()) {
+
+				} else if (e.getActionCommand().equalsIgnoreCase("BY_DATE")) {
+					if (dateCB.isSelected()) {
 						tl1.setEnabled(true);
 						tl2.setEnabled(true);
 						fromDateField.setEnabled(true);
@@ -971,39 +997,39 @@ public class SKAMainApp extends WebFrame {
 						tl2.setEnabled(false);
 						fromDateField.setEnabled(false);
 						toDateField.setEnabled(false);
-						if(vehicleCB.isSelected()) {
+						if (vehicleCB.isSelected()) {
 							searchDeliveryButton.setEnabled(true);
 						} else {
 							searchDeliveryButton.setEnabled(false);
 						}
-					}					
+					}
 				}
 			}
 		};
 		searchDeliveryButton.addActionListener(l);
 		vehicleCB.addActionListener(l);
 		dateCB.addActionListener(l);
-		
+
 		filteredConstraints = new GridBagConstraints();
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 4;
 		filteredConstraints.insets = new Insets(10, 20, 10, 20);
 		filteredLayout.setConstraints(searchDeliveryButton, filteredConstraints);
 		filteredPanel.add(searchDeliveryButton);
-		
+
 		filteredConstraints = new GridBagConstraints();
 		resultLabel = new WebLabel();
 		resultLabel.setFont(getLabelFont());
 		filteredConstraints.gridwidth = 5;
 		filteredConstraints.gridx = 0;
-		filteredConstraints.gridy = 5;	
+		filteredConstraints.gridy = 5;
 		filteredConstraints.gridheight = 1;
 		filteredConstraints.weightx = 1;
 		filteredConstraints.anchor = GridBagConstraints.WEST;
 		filteredConstraints.insets = new Insets(10, 20, 10, 20);
 		filteredLayout.setConstraints(resultLabel, filteredConstraints);
 		filteredPanel.add(resultLabel);
-		
+
 		vehicleNumberLabel.setEnabled(Boolean.FALSE);
 		deliveryVehicleCombo.setEnabled(Boolean.FALSE);
 		fromDateField.setEnabled(Boolean.FALSE);
@@ -1022,7 +1048,7 @@ public class SKAMainApp extends WebFrame {
 		allFilteredPanel.setLayout(new BorderLayout());
 		allFilteredPanel.add(baseFilteredPanel, BorderLayout.CENTER);
 
-		basePanel.add(allFilteredPanel);		
+		basePanel.add(allFilteredPanel);
 
 		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
 				basePanel);
@@ -1881,29 +1907,6 @@ public class SKAMainApp extends WebFrame {
 
 	private void displayExpenseScreen(ApplicationResourceBundle bundle) {
 		getContentPane().removeAll();
-		final WebButton createExpenseButton = new WebButton("Create Expense");
-		createExpenseButton.setFont(getLabelFont());
-		createExpenseButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				displayCreateExpenseDialog(SKAMainApp.this);
-			}
-
-		});
-
-		final WebButton searchExpenseButton = new WebButton("Search Expense");
-		searchExpenseButton.setFont(getLabelFont());
-		searchExpenseButton.setIcon(createImageIcon("search.png"));
-
-		searchExpenseButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				displaySearchExpenseDialog();
-			}
-		});
-
-		WebPanel basePanel = new WebPanel(true);
-		basePanel.setLayout(new FlowLayout(FlowLayout.LEADING));
-		basePanel.add(createExpenseButton);
-		basePanel.add(searchExpenseButton);
 
 		WebPanel contentPanel = new WebPanel(true);
 		contentPanel.setLayout(new BorderLayout());
@@ -1950,14 +1953,310 @@ public class SKAMainApp extends WebFrame {
 		};
 		expenseContentTable.addMouseListener(mouseListener);
 
+		// *******************************************************
+		final WebPanel filteredPanel = new WebPanel();
+		GridBagLayout filteredLayout = new GridBagLayout();
+		filteredPanel.setLayout(filteredLayout);
+		GridBagConstraints filteredConstraints = new GridBagConstraints();
+		filteredConstraints.fill = GridBagConstraints.HORIZONTAL;
+
+		final WebCheckBox categoryCB = new WebCheckBox("Category");
+		categoryCB.setActionCommand("BY_CAT");
+		categoryCB.setFont(getLabelFont());
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 0;
+		filteredConstraints.insets = new Insets(0, 20, 10, 20);
+		filteredLayout.setConstraints(categoryCB, filteredConstraints);
+		filteredPanel.add(categoryCB);
+
+		final WebLabel categoryLabel = new WebLabel();
+		categoryLabel.setText("Name : ");
+		categoryLabel.setFont(getLabelFont());
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 1;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(categoryLabel, filteredConstraints);
+		filteredPanel.add(categoryLabel);
+
+		final WebComboBox expCategoryCombo = new WebComboBox(new ExpenseTypeModel());
+		expCategoryCombo.setRenderer(new ExpenseTypeListCellRenderer());
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 1;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(expCategoryCombo, filteredConstraints);
+		filteredPanel.add(expCategoryCombo);
+
+		final WebCheckBox dateCB = new WebCheckBox("Expense Date");
+		dateCB.setActionCommand("BY_DATE");
+		dateCB.setFont(getLabelFont());
+
+		Calendar currentDate = Calendar.getInstance();
+		Calendar fromDate = Calendar.getInstance();
+		fromDate.add(Calendar.DAY_OF_YEAR, -7);
+
+		final WebLabel tl1 = new WebLabel("From : ");
+		tl1.setFont(getLabelFont());
+		final WebDateField fromDateField = new WebDateField(fromDate.getTime());
+
+		final WebLabel tl2 = new WebLabel("To : ");
+		tl2.setFont(getLabelFont());
+		final WebDateField toDateField = new WebDateField(currentDate.getTime());
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 2;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(dateCB, filteredConstraints);
+		filteredPanel.add(dateCB);
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(tl1, filteredConstraints);
+		filteredPanel.add(tl1);
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 3;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(fromDateField, filteredConstraints);
+		filteredPanel.add(fromDateField);
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 4;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(tl2, filteredConstraints);
+		filteredPanel.add(tl2);
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 4;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(toDateField, filteredConstraints);
+		filteredPanel.add(toDateField);
+
+		final WebCheckBox payeeCB = new WebCheckBox("Payee");
+		payeeCB.setActionCommand("BY_PAYEE");
+		payeeCB.setFont(getLabelFont());
+
+		final WebLabel payeeLabel = new WebLabel();
+		payeeLabel.setText("Vendor : ");
+		payeeLabel.setFont(getLabelFont());
+
+		paidToText = new AppTextField(15);
+		final WebButton searchButton = new WebButton();
+		searchButton.setActionCommand("LOOKUP");
+		searchButton.setBackground(Color.white);
+		searchButton.setIcon(createImageIcon("search.png"));
+		paidToText.setModel(new VendorData());
+		paidToText.setTrailingComponent(searchButton);
+		paidToText.setEditable(false);
+
+		paidToText.setModel(new VendorData());
+		paidToText.setTrailingComponent(searchButton);
+		paidToText.setEditable(false);
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 5;
+
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(payeeCB, filteredConstraints);
+		filteredPanel.add(payeeCB);
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 6;
+		filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		filteredLayout.setConstraints(payeeLabel, filteredConstraints);
+		filteredPanel.add(payeeLabel);
+
+		filteredConstraints.gridx = 1;
+		filteredConstraints.gridy = 6;
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(paidToText, filteredConstraints);
+		filteredPanel.add(paidToText);
+
+		final WebButton searchExpenseButton = new WebButton("Search");
+		searchExpenseButton.setIcon(createImageIcon("search.png"));
+		searchExpenseButton.setFont(getLabelFont());
+		searchExpenseButton.setActionCommand("SEARCH_EXPENSES");
+		searchExpenseButton.setEnabled(false);
+
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 7;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(searchExpenseButton, filteredConstraints);
+		filteredPanel.add(searchExpenseButton);
+
+		filteredConstraints = new GridBagConstraints();
+		resultLabel = new WebLabel();
+		resultLabel.setFont(getLabelFont());
+		resultLabel.setText("");
+		filteredConstraints.gridwidth = 5;
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 8;
+		filteredConstraints.gridheight = 1;
+		filteredConstraints.weightx = 1;
+		filteredConstraints.anchor = GridBagConstraints.WEST;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(resultLabel, filteredConstraints);
+		filteredPanel.add(resultLabel);
+
+		final WebButton createExpenseButton = new WebButton("Create Expense");
+		createExpenseButton.setActionCommand("CMD_CREATE_EXPENSE");
+		createExpenseButton.setFont(getLabelFont());
+
+		categoryLabel.setEnabled(false);
+		expCategoryCombo.setEnabled(false);
+		tl1.setEnabled(false);
+		tl2.setEnabled(false);
+		fromDateField.setEnabled(false);
+		toDateField.setEnabled(false);
+		payeeLabel.setEnabled(false);
+		paidToText.setEnabled(false);
+		searchExpenseButton.setEnabled(false);
+		searchButton.setEnabled(false);
+
+		ActionListener listener = new ActionListener() {
+
+			public void actionPerformed(ActionEvent e) {
+				if (categoryCB.isSelected()) {
+					categoryLabel.setEnabled(true);
+					expCategoryCombo.setEnabled(true);
+				} else {
+					categoryLabel.setEnabled(false);
+					expCategoryCombo.setEnabled(false);
+				}
+				if (dateCB.isSelected()) {
+					tl1.setEnabled(true);
+					tl2.setEnabled(true);
+					fromDateField.setEnabled(true);
+					toDateField.setEnabled(true);
+				} else {
+					tl1.setEnabled(false);
+					tl2.setEnabled(false);
+					fromDateField.setEnabled(false);
+					toDateField.setEnabled(false);
+				}
+				if (payeeCB.isSelected()) {
+					payeeLabel.setEnabled(true);
+					paidToText.setEnabled(true);
+					searchButton.setEnabled(true);
+				} else {
+					payeeLabel.setEnabled(false);
+					paidToText.setEnabled(false);
+					searchButton.setEnabled(false);
+				}
+				if (categoryCB.isSelected() || dateCB.isSelected() || payeeCB.isSelected()) {
+					searchExpenseButton.setEnabled(true);
+				} else {
+					searchExpenseButton.setEnabled(false);
+				}
+				if (e.getActionCommand().equalsIgnoreCase("CMD_CREATE_EXPENSE")) {
+					displayCreateExpenseDialog(SKAMainApp.this);
+				} else if (e.getActionCommand().equalsIgnoreCase("SEARCH_EXPENSES")) {
+					ReportSelectionData selectionData = new ReportSelectionData();
+					List<FilterParameter> params = new ArrayList<FilterParameter>();
+
+					if (dateCB.isSelected()) {
+						FilterParameter param = new FilterParameter();
+						param.setFilterName("DATE");
+						Map<String, Object> parameters = new HashMap<String, Object>();
+						Calendar fromCal = Calendar.getInstance();
+						fromCal.setTime(fromDateField.getDate());
+						fromCal.set(Calendar.HOUR_OF_DAY,0);
+						fromCal.set(Calendar.MINUTE,0);
+						fromCal.set(Calendar.SECOND,0);
+						fromCal.set(Calendar.HOUR_OF_DAY, 0);
+						fromCal.set(Calendar.MILLISECOND,000);
+						parameters.put("FROM_DATE", fromCal.getTime());
+						
+						Calendar toCal = Calendar.getInstance();
+						toCal.setTime(toDateField.getDate());
+						toCal.set(Calendar.HOUR_OF_DAY,23);
+						toCal.set(Calendar.MINUTE,59);
+						toCal.set(Calendar.SECOND,59);																	
+						parameters.put("TO_DATE", toCal.getTime());
+						param.setParameters(parameters);
+						params.add(param);
+					}
+					if (categoryCB.isSelected()) {
+						FilterParameter param = new FilterParameter();
+						param.setFilterName("CATEGORY");
+						Map<String, Object> parameters = new HashMap<String, Object>();
+						parameters.put("CATEGORY", expCategoryCombo.getSelectedItem());
+						param.setParameters(parameters);
+						params.add(param);
+
+					}
+					if (payeeCB.isSelected()) {
+						FilterParameter param = new FilterParameter();
+						param.setFilterName("PAYEE");
+						Map<String, Object> parameters = new HashMap<String, Object>();
+						parameters.put("PAYEE", paidToText.getModel());
+						param.setParameters(parameters);
+						params.add(param);
+					}
+					if (!params.isEmpty()) {
+						selectionData.setFilters(params);
+					}
+					displaySelectionData(selectionData);
+				} else if (e.getActionCommand().equalsIgnoreCase("LOOKUP")) {
+					DisplayVendorListDialog d = new DisplayVendorListDialog(SKAMainApp.this);
+					d.setVisible(true);
+				}
+			}
+		};
+		createExpenseButton.addActionListener(listener);
+		searchExpenseButton.addActionListener(listener);
+		categoryCB.addActionListener(listener);
+		dateCB.addActionListener(listener);
+		payeeCB.addActionListener(listener);
+		searchButton.addActionListener(listener);
+
+		filteredConstraints = new GridBagConstraints();
+		filteredConstraints.gridx = 0;
+		filteredConstraints.gridy = 9;
+
+		filteredConstraints.anchor = GridBagConstraints.WEST;
+		filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		filteredLayout.setConstraints(createExpenseButton, filteredConstraints);
+		filteredPanel.add(createExpenseButton);
+
+		WebPanel basePanel = new WebPanel();
+		basePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		// basePanel.add(createExpenseButton);
+
+		WebPanel baseFilteredPanel = new WebPanel();
+		baseFilteredPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		baseFilteredPanel.add(filteredPanel);
+
+		WebPanel allFilteredPanel = new WebPanel();
+		allFilteredPanel.setLayout(new BorderLayout());
+		allFilteredPanel.add(baseFilteredPanel, BorderLayout.CENTER);
+		basePanel.add(allFilteredPanel, BorderLayout.SOUTH);
+
 		WebSplitPane splitPane = new WebSplitPane(com.alee.laf.splitpane.WebSplitPane.VERTICAL_SPLIT, contentPanel,
 				basePanel);
 		splitPane.setOneTouchExpandable(true);
-		splitPane.setDividerLocation(400);
+		splitPane.setDividerLocation(200);
 		splitPane.setContinuousLayout(false);
+
 		getContentPane().add(splitPane, BorderLayout.CENTER);
 		decorateSouthPanel();
 		revalidate();
+
+		// *******************************************************
+
+	}
+	
+	private void displaySelectionData(ReportSelectionData selectionData) {
+		LOG.info("Selection Type :" +selectionData.getSelectionType());
+		for(FilterParameter p : selectionData.getFilters()) {
+			LOG.info(p.getFilterName());
+			for (Map.Entry<String,Object> entry : p.getParameters().entrySet()) {
+				LOG.info("Key : "+entry.getKey()+" --> Value : "+entry.getValue());
+			}
+		}
 	}
 
 	private void showInvestments(InvestorData data) {
@@ -2075,5 +2374,13 @@ public class SKAMainApp extends WebFrame {
 
 	public void setOrderDeliveryContentTable(WebTable orderDeliveryContentTable) {
 		this.orderDeliveryContentTable = orderDeliveryContentTable;
+	}
+
+	public AppTextField getPaidToText() {
+		return paidToText;
+	}
+
+	public void setPaidToText(AppTextField paidToText) {
+		this.paidToText = paidToText;
 	}
 }

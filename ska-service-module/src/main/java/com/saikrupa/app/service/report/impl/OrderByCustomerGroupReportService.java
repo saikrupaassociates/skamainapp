@@ -9,6 +9,8 @@ import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
+import com.itextpdf.text.Paragraph;
+import com.itextpdf.text.Phrase;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.saikrupa.app.dto.Customer2OrderData;
 import com.saikrupa.app.dto.CustomerData;
@@ -27,8 +29,6 @@ public class OrderByCustomerGroupReportService extends AbstractReportService {
 	public OrderByCustomerGroupReportService(List<OrderData> orders) {
 		setOrders(orders);
 	}
-	
-	
 
 	public void saveReport(String reportName) {
 		Document pdfDocument = createBlankDocument(reportName);
@@ -168,34 +168,21 @@ public class OrderByCustomerGroupReportService extends AbstractReportService {
 			outerTable.addCell(consolidationTable);
 			outerTable.addCell(dataTable);
 			
-			PdfPTable dummyTable = new PdfPTable(4);
-			
+			PdfPTable dummyTable = new PdfPTable(4);			
 			dummyTable.setWidthPercentage(100F);
 			ReportTableDataCell data_dummy = new ReportTableDataCell("              ", CellValueType.TEXT);
 			data_dummy.setBorder(0);
 			data_dummy.setColspan(4);
 			dummyTable.addCell(data_dummy);
 			outerTable.addCell(dummyTable);
-		}
+		}		
+		Paragraph p = new Paragraph();
+		p.add(outerTable);
+		p.setPaddingTop(10);
+		document.add(p);
 		document.add(outerTable);	
-	}	
-	
-	private Map<String, Double> getOrderTotalMap(List<OrderData> orders) {
-		double totalValue = 0;
-		double totalPaid = 0;		
-		for(OrderData data : orders) {
-			totalValue = totalValue + data.getTotalPrice();
-			if(data.getPaymentStatus() == PaymentStatus.PAID || data.getPaymentStatus() == PaymentStatus.PARTIAL){
-				totalPaid = totalPaid + data.getTotalPrice();
-			}
-		}
-		HashMap<String, Double> map = new HashMap<String, Double>();
-		map.put("TOTAL_ORDER_VALUE", totalValue);
-		map.put("TOTAL_ORDER_PAID", totalPaid);
-		map.put("TOTAL_ORDER_PENDING", totalValue - totalPaid);
-		map.put("TOTAL_ORDER_COUNT", Double.valueOf(String.valueOf(orders.size())));
-		return map;
 	}
+	
 	
 	private Map<String, Double> getOrderValues(List<OrderData> orderList) {
 		Double total = 0.0;

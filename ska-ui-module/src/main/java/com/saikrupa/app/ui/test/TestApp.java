@@ -1,4 +1,4 @@
-package com.saikrupa.app.ui;
+package com.saikrupa.app.ui.test;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -15,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.time.Month;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -62,11 +63,9 @@ import com.saikrupa.app.dto.OrderData;
 import com.saikrupa.app.dto.OrderEntryData;
 import com.saikrupa.app.dto.OrderStatus;
 import com.saikrupa.app.dto.PaymentEntryData;
-import com.saikrupa.app.dto.VehicleData;
 import com.saikrupa.app.dto.VendorData;
 import com.saikrupa.app.ui.component.AppTextField;
 import com.saikrupa.app.ui.models.DeliveryStatusModel;
-import com.saikrupa.app.ui.models.DeliveryVehicleModel;
 import com.saikrupa.app.ui.models.ExpenseTypeListCellRenderer;
 import com.saikrupa.app.ui.models.ExpenseTypeModel;
 import com.saikrupa.app.ui.models.InvestmentTableModel;
@@ -76,7 +75,6 @@ import com.saikrupa.app.ui.models.OrderEntryTableModel;
 import com.saikrupa.app.ui.models.PaymentEntryTableModel;
 import com.saikrupa.app.ui.models.PaymentStatusModel;
 import com.saikrupa.app.ui.models.PaymentTypeModel;
-import com.saikrupa.app.ui.models.VehicleListCellRenderer;
 import com.saikrupa.app.ui.models.paymentTypeListCellRenderer;
 
 public class TestApp extends WebFrame {
@@ -89,23 +87,111 @@ public class TestApp extends WebFrame {
 	private Webcam webcam = null;
 	private WebPanel photoPanel;
 	private WebPanel imagePanel;
+	
+	final Integer[] years = { 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 };
 
 	public TestApp() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		createDeliveryFilterPanel();
+		createDateSelectionDialog();
 	}
+	
+ 
+	
+	private void createDateSelectionDialog() {
+		final WebPanel filteredPanel = new WebPanel();
+		GridBagLayout filteredLayout = new GridBagLayout();
+		filteredPanel.setLayout(filteredLayout);
+		GridBagConstraints fc = new GridBagConstraints();
+		fc.fill = GridBagConstraints.HORIZONTAL;
 
-	private void showSearchExpenseDialog() {
-		SKAMainApp app = new SKAMainApp();		
-		SearchExpenseDialog d = new SearchExpenseDialog(app);
-		d.setVisible(true);
-		if (!d.isVisible()) {
-			System.exit(0);
-		}
-	}
+		final WebRadioButton yearCB = new WebRadioButton("Annual");
+		yearCB.setActionCommand("BY_YEAR");
+		yearCB.setFont(applyTableFont());
+		
+		final WebRadioButton yearMonthCB = new WebRadioButton("Monthly");
+		yearMonthCB.setFont(applyTableFont());
+		yearMonthCB.setActionCommand("BY_YEAR_MONTH");		
+		
+		
+		WebButtonGroup bg = new WebButtonGroup(true);
+		bg.setOrientation(SwingConstants.HORIZONTAL);
+		bg.setLayout(new FlowLayout(FlowLayout.LEFT, 50, 0));
+		
+		bg.add(yearCB);
+		bg.add(yearMonthCB);
+		
+		WebPanel cbPanel = new WebPanel();
+		cbPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		cbPanel.add(bg);
+		
 
-	private void showGlassPane() {
+		fc.gridx = 0;
+		fc.gridy = 0;
+		fc.insets = new Insets(0, 20, 10, 0);
+		filteredLayout.setConstraints(cbPanel, fc);
+		filteredPanel.add(cbPanel);
+		
+		WebPanel selectionPanel = new WebPanel();
+		selectionPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 0));		
+		
+		final WebLabel yearLabel = new WebLabel();
+		yearLabel.setText("Year : ");
+		yearLabel.setFont(applyLabelFont());
+		selectionPanel.add(yearLabel);
+		
+		final WebComboBox yearComboBox = new WebComboBox(years);
+		selectionPanel.add(yearComboBox);
+		
+		fc.gridx = 0;
+		fc.gridy = 1;
+		fc.insets = new Insets(0, 20, 10, 0);
+		filteredLayout.setConstraints(selectionPanel, fc);
+		filteredPanel.add(selectionPanel);
 
+
+		final WebLabel monthLabel = new WebLabel("Month : ");
+		monthLabel.setFont(applyLabelFont());
+		final WebComboBox monthComboBox = new WebComboBox(Month.values());
+		
+		selectionPanel.add(monthLabel);
+		selectionPanel.add(monthComboBox);
+
+
+		final WebButton searchButton = new WebButton("Search");
+		searchButton.setFont(applyLabelFont());
+		fc = new GridBagConstraints();
+		fc.gridx = 0;
+		fc.gridy = 2;
+		fc.ipadx = 4;
+		fc.insets = new Insets(0, 20, 10, 0);
+		filteredLayout.setConstraints(searchButton, fc);
+		filteredPanel.add(searchButton);
+		
+		ActionListener l = new ActionListener() {			
+			public void actionPerformed(ActionEvent e) {
+				if(yearCB.isSelected()) {
+					monthLabel.setEnabled(false);
+					monthComboBox.setEnabled(false);
+					
+					yearLabel.setEnabled(true);
+					yearComboBox.setEnabled(true);
+				}
+				
+				if(yearMonthCB.isSelected()) {
+					yearLabel.setEnabled(true);
+					yearComboBox.setEnabled(true);
+					
+					monthLabel.setEnabled(true);
+					monthComboBox.setEnabled(true);
+				}
+			}
+		};
+		yearCB.addActionListener(l);
+		yearMonthCB.addActionListener(l);
+		
+		getContentPane().add(filteredPanel, BorderLayout.CENTER);
+		pack();
+		setVisible(true);
 	}
 
 	private void createReportLookupScreen() {
@@ -499,134 +585,169 @@ public class TestApp extends WebFrame {
 		pack();
 		setVisible(true);
 	}
-	
-	
+
 	private void createDeliveryFilterPanel() {
 		final WebPanel filteredPanel = new WebPanel();
 		GridBagLayout filteredLayout = new GridBagLayout();
 		filteredPanel.setLayout(filteredLayout);
 		GridBagConstraints filteredConstraints = new GridBagConstraints();
 		filteredConstraints.fill = GridBagConstraints.HORIZONTAL;
-		
-		final WebCheckBox vehicleCB = new WebCheckBox("Vehicle");
-		vehicleCB.setActionCommand("BY_VEH");	
-		
-		filteredConstraints.gridwidth = 4;
+
+		final WebRadioButton yearCB = new WebRadioButton("Annual");
+		yearCB.setActionCommand("BY_YEAR");
+
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 0;
 		filteredConstraints.insets = new Insets(0, 20, 10, 20);
-		filteredLayout.setConstraints(vehicleCB, filteredConstraints);
-		filteredPanel.add(vehicleCB);
-		
+		filteredLayout.setConstraints(yearCB, filteredConstraints);
+		filteredPanel.add(yearCB);
+
 		filteredConstraints = new GridBagConstraints();
-		
-		final WebLabel vehicleNumberLabel = new WebLabel();
-		vehicleNumberLabel.setText("Number : ");
-		
+		final WebLabel yearLabel = new WebLabel();
+		yearLabel.setText("Year : ");
+
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 1;
 		filteredConstraints.insets = new Insets(0, 30, 10, 0);
-		filteredLayout.setConstraints(vehicleNumberLabel, filteredConstraints);
-		filteredPanel.add(vehicleNumberLabel);
-		
-		final WebComboBox deliveryVehicleCombo = new WebComboBox(new DeliveryVehicleModel());
-		deliveryVehicleCombo.setRenderer(new VehicleListCellRenderer());
-		
+		filteredLayout.setConstraints(yearLabel, filteredConstraints);
+		filteredPanel.add(yearLabel);
+
+		final Integer[] years = { 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 };
+
+		final WebComboBox yearComboBox = new WebComboBox(years);
+
 		filteredConstraints.gridx = 1;
 		filteredConstraints.gridy = 1;
 		filteredConstraints.insets = new Insets(0, 5, 10, 10);
-		filteredLayout.setConstraints(deliveryVehicleCombo, filteredConstraints);
-		filteredPanel.add(deliveryVehicleCombo);	
-		
+		filteredLayout.setConstraints(yearComboBox, filteredConstraints);
+		filteredPanel.add(yearComboBox);
 
-		final WebCheckBox dateCB = new WebCheckBox("Delivery Date");
-		dateCB.setActionCommand("BY_DATE");		
-
-		WebLabel tl1 = new WebLabel("From : ");
-		final WebDateField fromDateField = new WebDateField(new Date());
-
-		WebLabel tl2 = new WebLabel("To : ");
-		final WebDateField toDateField = new WebDateField(new Date());
-
+		final WebRadioButton yearMonthCB = new WebRadioButton("Monthly");
+		yearCB.setActionCommand("BY_YEAR_MONTH");
+		filteredConstraints.fill=GridBagConstraints.EAST;
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 2;
-		filteredConstraints.gridwidth = 4;
-		filteredConstraints.insets = new Insets(10, 20, 10, 20);
-		filteredLayout.setConstraints(dateCB, filteredConstraints);
-		filteredPanel.add(dateCB);
-
+		filteredConstraints.insets = new Insets(0, 20, 10, 20);
+		filteredLayout.setConstraints(yearMonthCB, filteredConstraints);
+		filteredPanel.add(yearMonthCB);
+		yearMonthCB.setBackground(Color.GREEN);
+		
 		filteredConstraints = new GridBagConstraints();
+		final WebLabel yearYMLabel = new WebLabel();
+		yearYMLabel.setText("Year : ");
+
 		filteredConstraints.gridx = 0;
 		filteredConstraints.gridy = 3;
 		filteredConstraints.insets = new Insets(0, 30, 10, 0);
-		filteredLayout.setConstraints(tl1, filteredConstraints);
-		filteredPanel.add(tl1);
+		filteredLayout.setConstraints(yearYMLabel, filteredConstraints);
+		filteredPanel.add(yearYMLabel);
+
+		final Integer[] yearValues = { 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 };		 
+
+		final WebComboBox yearYMComboBox = new WebComboBox(yearValues);
 
 		filteredConstraints.gridx = 1;
 		filteredConstraints.gridy = 3;
-		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
-		filteredLayout.setConstraints(fromDateField, filteredConstraints);
-		filteredPanel.add(fromDateField);
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(yearYMComboBox, filteredConstraints);
+		filteredPanel.add(yearYMComboBox);
+
+		WebLabel monthYMLabel = new WebLabel("Month : ");
+		final WebComboBox monthYMComboBox = new WebComboBox(Month.values());
 
 		filteredConstraints.gridx = 2;
 		filteredConstraints.gridy = 3;
 		filteredConstraints.insets = new Insets(0, 30, 10, 0);
-		filteredLayout.setConstraints(tl2, filteredConstraints);		
-		filteredPanel.add(tl2);
+		filteredLayout.setConstraints(monthYMLabel, filteredConstraints);
+		filteredPanel.add(monthYMLabel);
 
 		filteredConstraints.gridx = 3;
 		filteredConstraints.gridy = 3;
-		filteredConstraints.insets = new Insets(0, 5, 10, 10);		
-		filteredLayout.setConstraints(toDateField, filteredConstraints);
-		filteredPanel.add(toDateField);	
+		filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		filteredLayout.setConstraints(monthYMComboBox, filteredConstraints);
+		filteredPanel.add(monthYMComboBox);
 		
-		
-		final WebButton searchDeliveryButton = new WebButton("Search");		
-		
-		filteredConstraints.gridx = 0;
-		filteredConstraints.gridy = 4;
-		filteredConstraints.insets = new Insets(10, 20, 10, 20);
-		filteredLayout.setConstraints(searchDeliveryButton, filteredConstraints);
-		filteredPanel.add(searchDeliveryButton);
-		
-	
-		
-		WebLabel resultLabel = new WebLabel();
+
+		// filteredConstraints = new GridBagConstraints();
+		// final WebCheckBox ymCB = new WebCheckBox("Year & Month");
+		// ymCB.setActionCommand("BY_YEAR_MONTH");
+		//
+		// WebLabel tl1 = new WebLabel("Year : ");
+		// final WebComboBox yearYMComboBox = new WebComboBox(years);
+		//
+		// WebLabel tl2 = new WebLabel("To : ");
+		// final WebComboBox monthYMComboBox = new WebComboBox(Month.values());
+		//
+		// filteredConstraints.gridx = 0;
+		// filteredConstraints.gridy = 2;
+		// filteredConstraints.gridwidth = 5;
+		// filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		// filteredLayout.setConstraints(ymCB, filteredConstraints);
+		// filteredPanel.add(ymCB);
+		//
+		// filteredConstraints = new GridBagConstraints();
+		// filteredConstraints.gridx = 0;
+		// filteredConstraints.gridy = 3;
+		// filteredLayout.setConstraints(tl1, filteredConstraints);
+		// filteredPanel.add(tl1);
+		//
+		// filteredConstraints.gridx = 1;
+		// filteredConstraints.gridy = 3;
+		// filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		// filteredLayout.setConstraints(yearYMComboBox, filteredConstraints);
+		// filteredPanel.add(yearYMComboBox);
+		//
+		// filteredConstraints.gridx = 2;
+		// filteredConstraints.gridy = 3;
+		// filteredConstraints.insets = new Insets(0, 30, 10, 0);
+		// filteredLayout.setConstraints(tl2, filteredConstraints);
+		// filteredPanel.add(tl2);
+		//
+		// filteredConstraints.gridx = 3;
+		// filteredConstraints.gridy = 3;
+		// filteredConstraints.insets = new Insets(0, 5, 10, 10);
+		// filteredLayout.setConstraints(monthYMComboBox, filteredConstraints);
+		// filteredPanel.add(monthYMComboBox);
+		//
+		// final WebButton searchDeliveryButton = new WebButton("Search");
+		//
+		// filteredConstraints = new GridBagConstraints();
+		// filteredConstraints.gridx = 0;
+		// filteredConstraints.gridy = 4;
+		// filteredConstraints.insets = new Insets(10, 20, 10, 20);
+		// filteredLayout.setConstraints(searchDeliveryButton,
+		// filteredConstraints);
+		// filteredPanel.add(searchDeliveryButton);
 
 		WebPanel basePanel = new WebPanel(new FlowLayout(FlowLayout.LEFT));
-		
+
 		WebPanel baseFilteredPanel = new WebPanel();
 		baseFilteredPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-		baseFilteredPanel.add(filteredPanel);	
-		
-		WebPanel labelPanel = new WebPanel();
-		labelPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		labelPanel.add(resultLabel);
-		
+		baseFilteredPanel.add(filteredPanel);
+
 		WebPanel allFilteredPanel = new WebPanel();
 		allFilteredPanel.setLayout(new BorderLayout());
-		allFilteredPanel.add(baseFilteredPanel, BorderLayout.CENTER);		
-		allFilteredPanel.add(labelPanel, BorderLayout.SOUTH);
-		
+		allFilteredPanel.add(baseFilteredPanel, BorderLayout.CENTER);
 		basePanel.add(allFilteredPanel);
-		
-//		basePanelConstraints.gridx = 0;
-//		basePanelConstraints.gridy = 0;
-//		basePanelConstraints.insets = new Insets(0, 20, 10, 20);
-//		basePanelLayout.setConstraints(filteredPanel, basePanelConstraints);
-//		basePanel.add(filteredPanel);
-		
-//		basePanelConstraints.gridx = 1;
-//		basePanelConstraints.gridy = 0;
-//		basePanelConstraints.insets = new Insets(0, 20, 10, 20);
-//		basePanelLayout.setConstraints(searchDeliveryButton, basePanelConstraints);
-//		basePanel.add(searchDeliveryButton);
-		
-//		basePanelConstraints.gridx = 1;
-//		basePanelConstraints.gridy = 1;
-//		basePanelConstraints.insets = new Insets(0, 20, 10, 20);
-//		basePanelLayout.setConstraints(resultLabel, basePanelConstraints);
-//		basePanel.add(resultLabel);		
+
+		// basePanelConstraints.gridx = 0;
+		// basePanelConstraints.gridy = 0;
+		// basePanelConstraints.insets = new Insets(0, 20, 10, 20);
+		// basePanelLayout.setConstraints(filteredPanel, basePanelConstraints);
+		// basePanel.add(filteredPanel);
+
+		// basePanelConstraints.gridx = 1;
+		// basePanelConstraints.gridy = 0;
+		// basePanelConstraints.insets = new Insets(0, 20, 10, 20);
+		// basePanelLayout.setConstraints(searchDeliveryButton,
+		// basePanelConstraints);
+		// basePanel.add(searchDeliveryButton);
+
+		// basePanelConstraints.gridx = 1;
+		// basePanelConstraints.gridy = 1;
+		// basePanelConstraints.insets = new Insets(0, 20, 10, 20);
+		// basePanelLayout.setConstraints(resultLabel, basePanelConstraints);
+		// basePanel.add(resultLabel);
 
 		getContentPane().add(basePanel, BorderLayout.CENTER);
 		pack();
@@ -2444,6 +2565,15 @@ public class TestApp extends WebFrame {
 		}
 
 	}
+	
+	public Font applyLabelFont() {
+		return new Font("verdana", Font.BOLD, 13);
+	}
+
+	public Font applyTableFont() {
+		return new Font("verdana", Font.BOLD, 13);
+	}
+	
 }
 
 class MyTest {
@@ -2470,6 +2600,7 @@ class MyTest {
 	@Override
 	public String toString() {
 		return name + " -- " + age;
-	}
+	}	
+	
 
 }

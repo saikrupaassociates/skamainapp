@@ -79,7 +79,8 @@ public class DefaultOrderImportService implements OrderImportService {
 						delivery.setLocation(cell.getStringCellValue());
 						break;
 					case 3:
-						order.setProductCode(String.valueOf(cell.getNumericCellValue()));
+						String productCode = cell.getStringCellValue().split("@")[0];
+						order.setProductCode(productCode);
 						break;
 					case 4:
 						order.setQuantity(cell.getNumericCellValue());

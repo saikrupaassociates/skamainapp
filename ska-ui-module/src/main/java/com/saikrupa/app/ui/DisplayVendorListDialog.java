@@ -1,6 +1,7 @@
 package com.saikrupa.app.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -39,9 +40,18 @@ public class DisplayVendorListDialog extends BaseAppDialog {
 		setModal(true);
 	}
 	
+	public DisplayVendorListDialog(SKAMainApp owner) {
+		super(owner, true);
+		setTitle("Select Vendor..."); 
+		setDefaultCloseOperation(WebDialog.DISPOSE_ON_CLOSE);
+		buildGUI(owner);
+		setLocationRelativeTo(owner);
+		setModal(true);
+	}
+	
 
 
-	private void buildGUI(final BaseAppDialog owner) {
+	private void buildGUI(final Component owner) {
 		final WebTable vendorContentTable = new WebTable();
 		loadVendorData(vendorContentTable);
 		vendorContentTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -102,7 +112,7 @@ public class DisplayVendorListDialog extends BaseAppDialog {
 		setSize(new Dimension(1000, 400));
 	}
 
-	private void performSelectionOperation(WebTable vendorContentTable, BaseAppDialog owner) {
+	private void performSelectionOperation(WebTable vendorContentTable, Component owner) {
 		int selection = vendorContentTable.getSelectedRow();
 		VendorTableModel model = (VendorTableModel) vendorContentTable.getModel();
 		VendorData data = model.getVendorDataList().get(selection);	
@@ -118,6 +128,10 @@ public class DisplayVendorListDialog extends BaseAppDialog {
 			DisplayExpenseReportSelectionDialog d = (DisplayExpenseReportSelectionDialog) owner;
 			d.getPaidToText().setModel(data);
 			d.getPaidToText().setText(data.getName());
+		} else if(owner instanceof SKAMainApp) {
+			SKAMainApp app = (SKAMainApp) owner;
+			app.getPaidToText().setModel(data);
+			app.getPaidToText().setText(data.getName());
 		}
 
 	}

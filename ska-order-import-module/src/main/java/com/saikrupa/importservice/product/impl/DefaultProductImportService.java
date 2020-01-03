@@ -61,7 +61,8 @@ public class DefaultProductImportService implements ProductImportService {
 					Cell cell = cellIterator.next();										
 					switch(cell.getColumnIndex()) {
 					case 0:
-						product.setCode(String.valueOf(cell.getNumericCellValue()));
+						String productCode = cell.getStringCellValue().split("@")[0];
+						product.setCode(productCode);
 						break;
 					case 1:		
 						Date entryDate = cell.getDateCellValue();
@@ -79,7 +80,8 @@ public class DefaultProductImportService implements ProductImportService {
 						product.setQuantityRejected(cell.getNumericCellValue());
 						break;
 					case 4:
-						product.setMachineCode(Double.valueOf(cell.getNumericCellValue()).intValue());
+						String machineCode = cell.getStringCellValue().split("@")[0];
+						product.setMachineCode(Integer.valueOf(machineCode));
 						break;
 					
 					}					

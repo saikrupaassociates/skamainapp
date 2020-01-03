@@ -28,12 +28,11 @@ public class CustomerOrderReportService extends AbstractReportService {
 	public void saveReport(final String reportName) {
 		Document pdfDocument = createBlankDocument(reportName);
 		pdfDocument.close();
-		System.out.println("Done !!!");
 	}
-
+	
 	@Override
 	public void createPageTableContent(Document document) throws DocumentException {
-		PdfPTable dataTable = new PdfPTable(9);
+		PdfPTable dataTable = new PdfPTable(10);
 		dataTable.setHorizontalAlignment(Element.ALIGN_LEFT);
 		dataTable.getDefaultCell().setBorder(2);
 
@@ -48,6 +47,7 @@ public class CustomerOrderReportService extends AbstractReportService {
 		ReportTableHeaderCell amount = new ReportTableHeaderCell("Order Total");
 		ReportTableHeaderCell paymentStatus = new ReportTableHeaderCell("Payment");
 		ReportTableHeaderCell deliveryStatus = new ReportTableHeaderCell("Delivery");
+		ReportTableHeaderCell deliveryLocation = new ReportTableHeaderCell("Location");
 
 		dataTable.addCell(header_OrderNo);
 		dataTable.addCell(header_OrderDate);
@@ -58,6 +58,7 @@ public class CustomerOrderReportService extends AbstractReportService {
 		dataTable.addCell(amount);
 		dataTable.addCell(paymentStatus);
 		dataTable.addCell(deliveryStatus);
+		dataTable.addCell(deliveryLocation);
 
 		for (OrderData data : getOrders()) {
 			ReportTableDataCell data_OrderNo = new ReportTableDataCell(String.valueOf(data.getCode()),
@@ -76,8 +77,8 @@ public class CustomerOrderReportService extends AbstractReportService {
 					CellValueType.TEXT);
 			String delivery = data.getDeliveryStatus().toString();
 			ReportTableDataCell data_deliveryStatus = new ReportTableDataCell(delivery, CellValueType.TEXT);
-			data_deliveryStatus.setColspan(2);
-
+			ReportTableDataCell data_deliveryLocation = new ReportTableDataCell(data.getOrderEntries().get(0).getDeliveryAddress().getLine1(), CellValueType.TEXT);
+			//data_deliveryLocation.setColspan(2);
 			dataTable.addCell(data_OrderNo);
 			dataTable.addCell(data_OrderDate);
 			dataTable.addCell(data_OrderedBy);
@@ -87,12 +88,15 @@ public class CustomerOrderReportService extends AbstractReportService {
 			dataTable.addCell(data_amount);
 			dataTable.addCell(data_paymentStatus);
 			dataTable.addCell(data_deliveryStatus);
+			dataTable.addCell(data_deliveryLocation);
+			
 		}
 
 		PdfPTable consolidationTable = new PdfPTable(5);
 		ReportTableHeaderCell totalOrder = new ReportTableHeaderCell("Total Order Amount");
 		ReportTableHeaderCell receivedPayment = new ReportTableHeaderCell("Amount Paid");
 		ReportTableHeaderCell pendingPayment = new ReportTableHeaderCell("Amount Pending");
+		ReportTableHeaderCell orderCountLabel = new ReportTableHeaderCell("Order Count");
 		ReportTableHeaderCell customerContact = new ReportTableHeaderCell("Contact Number");
 
 		ReportTableDataCell totalOrderValue = new ReportTableDataCell(getOrderValues().get("TOTAL_ORDER_VALUE"),
@@ -101,6 +105,7 @@ public class CustomerOrderReportService extends AbstractReportService {
 				CellValueType.AMOUNT, true);
 		ReportTableDataCell pendingValue = new ReportTableDataCell(getOrderValues().get("TOTAL_ORDER_PENDING"),
 				CellValueType.AMOUNT, true);
+		ReportTableDataCell orderCountValue = new ReportTableDataCell(String.valueOf(getOrderValues().get("TOTAL_ORDER_COUNT").intValue()), CellValueType.TEXT, true);
 		ReportTableDataCell contactValue = new ReportTableDataCell(getOrders().get(0).getCustomer().getPrimaryContact(),
 				CellValueType.TEXT, true);
 
@@ -109,8 +114,12 @@ public class CustomerOrderReportService extends AbstractReportService {
 		consolidationTable.addCell(totalOrderValue);
 
 		consolidationTable.addCell(receivedPayment);
-		paidValue.setColspan(5);
+		paidValue.setColspan(2);
 		consolidationTable.addCell(paidValue);
+		
+		consolidationTable.addCell(orderCountLabel);
+		paidValue.setColspan(2);
+		consolidationTable.addCell(orderCountValue);
 
 		consolidationTable.addCell(pendingPayment);
 		pendingValue.setColspan(2);
@@ -123,36 +132,11 @@ public class CustomerOrderReportService extends AbstractReportService {
 		PdfPTable outerTable = new PdfPTable(1);
 		outerTable.setWidthPercentage(100F);
 		outerTable.addCell(consolidationTable);
-		outerTable.addCell(dataTable);
+		outerTable.addCell(dataTable);		
 		document.add(outerTable);
 	}
 
-	private Map<String, Double> getOrderTotalMap() {
-		double totalValue = 0;
-		double totalPaid = 0;
-		for (OrderData data : getOrders()) {
-			totalValue = totalValue + data.getTotalPrice();
-			if (data.getPaymentStatus() == PaymentStatus.PAID) {
-				totalPaid = totalPaid + data.getTotalPrice();
-			}
-			if (data.getPaymentStatus() == PaymentStatus.PARTIAL) {
-				List<PaymentEntryData> paymentEntries = data.getOrderEntries().get(0).getPaymentEntries();
-				for (PaymentEntryData paymentEntry : paymentEntries) {
-					if (paymentEntry.getPaymentStatus() == PaymentStatus.PARTIAL) {
-						System.out.println("PaymentStatus.PARTIAL :: " + data.getCode());
-						System.out.println("Payable Amount : " + paymentEntry.getPayableAmount());
-						System.out.println("Paid Amount : " + paymentEntry.getAmount());
-					}
-				}
-			}
-
-		}
-		HashMap<String, Double> map = new HashMap<String, Double>();
-		map.put("TOTAL_ORDER_VALUE", totalValue);
-		map.put("TOTAL_ORDER_PAID", totalPaid);
-		map.put("TOTAL_ORDER_PENDING", totalValue - totalPaid);
-		return map;
-	}
+	
 
 	private Map<String, Double> getOrderValues() {
 		Double total = 0.0;
@@ -183,7 +167,7 @@ public class CustomerOrderReportService extends AbstractReportService {
 
 	@Override
 	public void addMetaData(Document document) {
-		document.addTitle("Consolidated Order Report By Customer");
+		document.addTitle("Order Report By Customer");
 
 	}
 
