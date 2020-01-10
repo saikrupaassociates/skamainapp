@@ -22,6 +22,7 @@ import com.alee.laf.combobox.WebComboBox;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.radiobutton.WebRadioButton;
+import com.alee.laf.rootpane.WebDialog;
 
 public class DateSelectionDialog extends BaseAppDialog {
 
@@ -32,14 +33,18 @@ public class DateSelectionDialog extends BaseAppDialog {
 	
 	private static final Logger LOG = Logger.getLogger(DateSelectionDialog.class);
 	
-	final Integer[] years = { 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 };
+	final Integer[] years = { 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030 };
 	
 	private Map<String, String> selectionMap; 
 
 	public DateSelectionDialog(SKAMainApp owner) {
-		super(owner);
-		setModal(true);
+		super(owner, true);
+		setTitle("Select Interval");
+		setDefaultCloseOperation(WebDialog.DISPOSE_ON_CLOSE);
+
 		buildUI();
+		setLocationRelativeTo(owner);
+		setModal(true);
 	}
 
 	private void buildUI() {
@@ -137,15 +142,13 @@ public class DateSelectionDialog extends BaseAppDialog {
 						Integer year = (Integer) yearComboBox.getSelectedItem();
 						Map<String, String> map = getSelectionMap(year, null);	
 						map.put("SELECTION_TYPE", "ANNUAL");
-						setSelectionMap(map);
-						LOG.info("Selection - Annual : "+getSelectionMap());
+						setSelectionMap(map);						
 					} else if(monthlySelectionRadio.isSelected()) {
 						Integer year = (Integer) yearComboBox.getSelectedItem();
 						Month month = (Month) monthComboBox.getSelectedItem();
 						Map<String, String> map = getSelectionMap(year, month);						
 						map.put("SELECTION_TYPE", "MONTHLY");
-						setSelectionMap(map);
-						LOG.info("Selection - Monthly: "+getSelectionMap());
+						setSelectionMap(map);						
 					}
 					dispose();
 				}

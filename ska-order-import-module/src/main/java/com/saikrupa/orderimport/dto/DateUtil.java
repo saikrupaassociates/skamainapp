@@ -13,5 +13,7 @@ public class DateUtil {
 		SimpleDateFormat f = new SimpleDateFormat("dd/MM/yyyy");
 		return f.format(date);
 	}
+	
+	
 
 }

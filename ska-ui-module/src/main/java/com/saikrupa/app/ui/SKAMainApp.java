@@ -789,7 +789,7 @@ public class SKAMainApp extends WebFrame {
 						if (selectionMap == null || selectionMap.isEmpty()) {
 							return;
 						} else {
-							generateReport(selectionMap);
+							displayBalanceSheetReport(selectionMap);
 						}
 
 					}
@@ -800,8 +800,17 @@ public class SKAMainApp extends WebFrame {
 		return listener;
 	}
 
-	private void generateReport(Map<String, String> selectionMap) {
-
+	private void displayBalanceSheetReport(Map<String, String> selectionMap) {
+		if(selectionMap != null) {
+			final String reportType = selectionMap.get("SELECTION_TYPE");
+			final String startDate = selectionMap.get("START_DATE");
+			final String endDate = selectionMap.get("END_DATE");
+			LOG.info("Selection : ["+reportType+"]");
+			LOG.info("Start Date : ["+startDate+"]");
+			LOG.info("End Date : ["+endDate+"]");
+			BalanceSheetReportDialog d = new BalanceSheetReportDialog(this, selectionMap);
+			d.setVisible(true);
+		}
 	}
 
 	private void showOrderDelivery(OrderData data) {

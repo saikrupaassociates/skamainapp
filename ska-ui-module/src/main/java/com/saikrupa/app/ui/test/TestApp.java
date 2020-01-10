@@ -11,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +19,9 @@ import java.sql.Timestamp;
 import java.time.Month;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -92,7 +95,225 @@ public class TestApp extends WebFrame {
 
 	public TestApp() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		createDateSelectionDialog();
+		createBalanceSheetReportDialog();
+	}
+	
+	private WebPanel createHeaderPanel() {
+		final WebPanel headerPanel = new WebPanel();
+		GridBagLayout headerLayout = new GridBagLayout();
+		headerPanel.setLayout(headerLayout);
+		GridBagConstraints fc = new GridBagConstraints();
+		fc.fill = GridBagConstraints.HORIZONTAL;
+		
+		WebLabel headerLabel = new WebLabel();
+		headerLabel.setText("Balance Sheet");		
+		Map<TextAttribute, Integer> fontAttributes = new HashMap<TextAttribute, Integer>();
+		fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+		Font font = new Font("COURIER",Font.BOLD, 18).deriveFont(fontAttributes);
+		headerLabel.setFont(font);
+		
+		fc.gridx = 0;
+		fc.gridy = 0;
+		fc.insets = new Insets(0, 20, 10, 0);
+		headerLayout.setConstraints(headerLabel, fc);
+		headerPanel.add(headerLabel);
+		
+		WebLabel dateRangeLabel = new WebLabel();
+		dateRangeLabel.setText("(Between date 01/01/2019 and 31/12/2019)");
+		dateRangeLabel.setFont(new Font("COURIER",Font.BOLD|Font.ITALIC, 14));
+		
+		fc.gridx = 0;
+		fc.gridy = 1;
+		fc.insets = new Insets(0, -40, 10, 0);
+		headerLayout.setConstraints(dateRangeLabel, fc);
+		headerPanel.add(dateRangeLabel);
+		return headerPanel;
+		
+	}
+	
+	private WebPanel createExpensePanel() {
+		WebPanel panel = new WebPanel();
+		GridBagLayout layout = new GridBagLayout();
+		panel.setLayout(layout);
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		
+		WebLabel l1 = new WebLabel("Sales Order Volume : ", SwingConstants.RIGHT);
+		final WebLabel orderVolume = new WebLabel("1004");
+
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l1, gc);
+		panel.add(l1);
+		
+		gc.gridx = 1;
+		gc.gridy = 0;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(orderVolume, gc);
+		panel.add(orderVolume);
+		
+		
+		
+		WebLabel l2 = new WebLabel("Sold - 9 Inch : ", SwingConstants.RIGHT);
+		final WebLabel quantity9Inch = new WebLabel("25000");
+
+		gc.gridx = 0;
+		gc.gridy = 1;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l2, gc);
+		panel.add(l2);
+		
+		gc.gridx = 1;
+		gc.gridy = 1;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(quantity9Inch, gc);
+		panel.add(quantity9Inch);
+		
+		WebLabel l3 = new WebLabel("Sold - 10 Inch : ", SwingConstants.RIGHT);
+		final WebLabel quantity10Inch = new WebLabel("25000");
+
+		gc.gridx = 0;
+		gc.gridy = 2;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l3, gc);
+		panel.add(l3);
+		
+		gc.gridx = 1;
+		gc.gridy = 2;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(quantity10Inch, gc);
+		panel.add(quantity10Inch);
+		
+		WebLabel l4 = new WebLabel("Sold - Block Brick : ", SwingConstants.RIGHT);
+		final WebLabel block = new WebLabel("25000");
+
+		gc.gridx = 0;
+		gc.gridy = 3;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l4, gc);
+		panel.add(l4);
+		
+		gc.gridx = 1;
+		gc.gridy = 3;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(block, gc);
+		panel.add(block);
+		return panel;
+	}
+	
+	private WebPanel createOrderDeliveredPanel() {
+		WebPanel panel = new WebPanel();
+		GridBagLayout layout = new GridBagLayout();
+		panel.setLayout(layout);
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		
+		WebLabel l1 = new WebLabel("Sales Order Volume : ", SwingConstants.RIGHT);
+		final WebLabel orderVolume = new WebLabel("1004");
+
+		gc.gridx = 0;
+		gc.gridy = 0;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l1, gc);
+		panel.add(l1);
+		
+		gc.gridx = 1;
+		gc.gridy = 0;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(orderVolume, gc);
+		panel.add(orderVolume);
+		
+		
+		
+		WebLabel l2 = new WebLabel("Sold - 9 Inch : ", SwingConstants.RIGHT);
+		final WebLabel quantity9Inch = new WebLabel("25000");
+
+		gc.gridx = 0;
+		gc.gridy = 1;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l2, gc);
+		panel.add(l2);
+		
+		gc.gridx = 1;
+		gc.gridy = 1;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(quantity9Inch, gc);
+		panel.add(quantity9Inch);
+		
+		WebLabel l3 = new WebLabel("Sold - 10 Inch : ", SwingConstants.RIGHT);
+		final WebLabel quantity10Inch = new WebLabel("25000");
+
+		gc.gridx = 0;
+		gc.gridy = 2;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l3, gc);
+		panel.add(l3);
+		
+		gc.gridx = 1;
+		gc.gridy = 2;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(quantity10Inch, gc);
+		panel.add(quantity10Inch);
+		
+		WebLabel l4 = new WebLabel("Sold - Block Brick : ", SwingConstants.RIGHT);
+		final WebLabel block = new WebLabel("25000");
+
+		gc.gridx = 0;
+		gc.gridy = 3;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(l4, gc);
+		panel.add(l4);
+		
+		gc.gridx = 1;
+		gc.gridy = 3;
+		gc.insets = new Insets(0, 0, 10, 0);
+		layout.setConstraints(block, gc);
+		panel.add(block);
+		return panel;
+	}
+	
+	private void createBalanceSheetReportDialog() {
+		WebPanel headerPanel = createHeaderPanel();
+		WebPanel salesOrderPanel = createOrderDeliveredPanel();
+		salesOrderPanel.setBorder(BorderFactory.createEtchedBorder());
+		WebPanel salesOrderPanel1 = createOrderDeliveredPanel();
+		salesOrderPanel1.setBorder(BorderFactory.createEtchedBorder());
+		
+				
+		WebPanel bodyPanel = new WebPanel();
+		bodyPanel.setBorder(BorderFactory.createLineBorder(Color.BLUE, 1));
+		GridBagLayout bodyLayout = new GridBagLayout();
+		bodyPanel.setLayout(bodyLayout);
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
+		
+		
+		c.gridx = 0;
+		c.gridy = 0;
+		c.insets = new Insets(0, 0, 10, 0);
+		bodyLayout.setConstraints(headerPanel, c);
+		bodyPanel.add(headerPanel);
+		
+		c.gridx = 1;
+		c.gridy = 0;
+		c.insets = new Insets(20, 10, 10, 50);
+		bodyLayout.setConstraints(salesOrderPanel, c);
+		bodyPanel.add(salesOrderPanel);
+		
+		c.gridx = 2;
+		c.gridy = 0;
+		c.insets = new Insets(20, 10, 10, 50);
+		bodyLayout.setConstraints(salesOrderPanel, c);
+		bodyPanel.add(salesOrderPanel1);
+		
+		
+		getContentPane().add(headerPanel, BorderLayout.NORTH);
+		getContentPane().add(bodyPanel, BorderLayout.CENTER);
+//		setSize(800, 600);
+		pack();
+		setVisible(true);
+		
 	}
 	
  
