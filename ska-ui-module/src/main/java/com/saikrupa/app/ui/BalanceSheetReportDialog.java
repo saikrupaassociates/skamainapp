@@ -7,6 +7,8 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.font.TextAttribute;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -18,12 +20,15 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.SwingConstants;
 
+import com.alee.extended.panel.WebButtonGroup;
+import com.alee.laf.button.WebButton;
 import com.alee.laf.label.WebLabel;
 import com.alee.laf.panel.WebPanel;
 import com.alee.laf.rootpane.WebDialog;
 import com.saikrupa.app.service.BalanceSheetService;
 import com.saikrupa.app.service.impl.DefaultBalanceSheetService;
 import com.saikrupa.app.util.CurrencyUtil;
+import com.saikrupa.app.util.DateUtil;
 
 public class BalanceSheetReportDialog extends BaseAppDialog {
 
@@ -68,7 +73,9 @@ public class BalanceSheetReportDialog extends BaseAppDialog {
 		headerPanel.add(titlePanel);
 		
 		WebLabel dateRangeLabel = new WebLabel();
-		dateRangeLabel.setText("(Between date "+selectionMap.get("START_DATE")+" and "+selectionMap.get("END_DATE")+")");
+		final String startDateString = DateUtil.convertStringToStandard(selectionMap.get("START_DATE"));
+		final String endDateString = DateUtil.convertStringToStandard(selectionMap.get("END_DATE"));
+		dateRangeLabel.setText("(Between date "+startDateString+" and "+endDateString+")");
 		dateRangeLabel.setFont(new Font("verdana",Font.BOLD|Font.ITALIC, 14));
 		dateRangeLabel.setForeground(Color.BLUE);
 		
@@ -167,6 +174,45 @@ public class BalanceSheetReportDialog extends BaseAppDialog {
 			gc.insets = new Insets(0, 0, 10, 0);
 			layout.setConstraints(orderVolume, gc);
 			panel.add(orderVolume);
+			
+			gridy++; 
+		}		
+		WebPanel basePanel = new WebPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+		basePanel.add(panel);
+		return basePanel;
+	}
+	
+	private WebPanel createDeliveryVehiclePanel(Map<String, Double> map) {
+		if(checkMap(map) != null) {
+			return checkMap(map);
+		}
+		WebPanel panel = new WebPanel();
+		GridBagLayout layout = new GridBagLayout();
+		panel.setLayout(layout);
+		GridBagConstraints gc = new GridBagConstraints();
+		gc.fill = GridBagConstraints.HORIZONTAL;
+		
+		int gridx = 0;
+		int gridy = 0;
+		
+		for (Entry<String, Double> entry : map.entrySet()) {
+			WebLabel l1 = new WebLabel(entry.getKey()+ " : ", SwingConstants.RIGHT);
+			l1.setFont(applyLabelFont());
+			
+			final WebLabel label = new WebLabel(CurrencyUtil.format(entry.getValue()));
+			label.setFont(applyLabelFont());
+			
+			gc.gridx = gridx;
+			gc.gridy = gridy;
+			gc.insets = new Insets(0, 0, 10, 0);
+			layout.setConstraints(l1, gc);
+			panel.add(l1);
+			
+			gc.gridx = gridx + 1;
+			gc.gridy = gridy;
+			gc.insets = new Insets(0, 0, 10, 0);
+			layout.setConstraints(label, gc);
+			panel.add(label);
 			
 			gridy++; 
 		}		
@@ -440,6 +486,8 @@ public class BalanceSheetReportDialog extends BaseAppDialog {
 		WebPanel summaryPanel = createProfitSummaryPanel(service.getProfitSummary(fromDate, toDate));
 		summaryPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK, 1), " Profit Margin Summary "));
 		
+		WebPanel vehicleSummaryPanel = createDeliveryVehiclePanel(service.getDeliveryVehicleSummary(fromDate, toDate));
+		vehicleSummaryPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK, 1), " Delivery Summary "));
 		
 		WebPanel collectionSummaryPanel = createCollectionSummaryPanel(service.getCollectionSummary(fromDate, toDate));
 		collectionSummaryPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK, 1), " Collection Summary "));
@@ -452,16 +500,54 @@ public class BalanceSheetReportDialog extends BaseAppDialog {
 		
 		WebPanel body2Panel = new WebPanel();
 		body2Panel.setLayout(new BoxLayout(body2Panel, BoxLayout.Y_AXIS));
+		body2Panel.add(vehicleSummaryPanel);
 		body2Panel.add(expensePanel);
 		body2Panel.add(Box.createVerticalGlue());
 		body2Panel.add(collectionSummaryPanel);
+		
 		
 		WebPanel bodyPanel = new WebPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
 		bodyPanel.add(body1Panel);
 		bodyPanel.add(body2Panel);
 		WebPanel headerPanel = createHeaderPanel(selectionMap);
+		
+		WebPanel buttonPanel = new WebPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10), true);
+		WebButton printButton = new WebButton();
+		printButton.setText("Print Summary");
+		printButton.setFont(applyLabelFont());
+		printButton.setActionCommand("PRINT");
+		
+		WebButton closeButton = new WebButton();
+		closeButton.setText("Close");
+		closeButton.setFont(applyLabelFont());
+		closeButton.setActionCommand("CLOSE");
+		
+		ActionListener l = new ActionListener() {
+			
+			public void actionPerformed(ActionEvent e) {
+				if(e.getActionCommand().equalsIgnoreCase("PRINT")) {
+					printSummary();
+				} else if(e.getActionCommand().equalsIgnoreCase("CLOSE")) {
+					dispose();
+				}
+			}
+		};
+		printButton.addActionListener(l);
+		closeButton.addActionListener(l);
+		
+		buttonPanel.add(printButton);
+		buttonPanel.add(closeButton);
+		buttonPanel.setBorder(BorderFactory.createEmptyBorder());
+		
+		
 		getContentPane().add(headerPanel, BorderLayout.NORTH);
 		getContentPane().add(bodyPanel, BorderLayout.CENTER);
+		getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 		pack();
+	}
+	
+	private void printSummary() {
+		// TODO Auto-generated method stub
+		
 	}
 }

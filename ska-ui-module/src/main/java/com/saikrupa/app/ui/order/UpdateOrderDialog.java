@@ -351,8 +351,17 @@ public class UpdateOrderDialog extends BaseAppDialog {
 		int confirmed = WebOptionPane.showConfirmDialog(this, "Are you sure of deleting this Order ["+data.getCode()+"]?",
 				"Confirm", WebOptionPane.YES_NO_OPTION, WebOptionPane.QUESTION_MESSAGE);
 		if (confirmed == WebOptionPane.YES_OPTION) {
-			LOG.info("TO BE IMPLEMENTED - validateAndDeleteOrder");
+			if(data.getOrderStatus() == OrderStatus.CREATED) {
+				proceedToDeleteOrder(data);
+			} else {
+				WebOptionPane.showMessageDialog(this, "Order cannot be deleted", "Order - Delete", WebOptionPane.ERROR);
+			}
 		}
+	}
+
+	private void proceedToDeleteOrder(OrderData data) {
+		// TODO Auto-generated method stub
+		
 	}
 
 	private void displayPartialSplitPaymentDialog() {

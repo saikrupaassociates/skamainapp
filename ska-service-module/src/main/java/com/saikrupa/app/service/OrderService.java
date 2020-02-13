@@ -11,5 +11,6 @@ public interface OrderService {
 	public void updateOrderStatus(OrderData order);	
 	public void updateOrderPayment(OrderData order, List<PaymentEntryData> newEntries, List<PaymentEntryData> customerExistingPayments);
 	public void updateOrderDelivery(OrderEntryData orderEntry) throws Exception;
+	public void deleteOrder(OrderData order);
 	
 }

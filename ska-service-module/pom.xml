@@ -8,12 +8,18 @@
 
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>ska-service-module</artifactId>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.fusesource.jansi/jansi -->
+		<dependency>
+			<groupId>org.fusesource.jansi</groupId>
+			<artifactId>jansi</artifactId>
+			<version>1.17.1</version>
 		</dependency>
 	</dependencies>
 </project>

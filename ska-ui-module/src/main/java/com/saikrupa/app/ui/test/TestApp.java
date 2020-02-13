@@ -95,7 +95,7 @@ public class TestApp extends WebFrame {
 
 	public TestApp() {
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		createBalanceSheetReportDialog();
+		testTableDialog();
 	}
 	
 	private WebPanel createHeaderPanel() {

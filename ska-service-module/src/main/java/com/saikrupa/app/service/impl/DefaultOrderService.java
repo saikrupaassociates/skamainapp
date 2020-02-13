@@ -122,6 +122,8 @@ public class DefaultOrderService implements OrderService {
 			PaymentService paymentService = new DefaultPaymentService();
 			for (OrderEntryData entry : order.getOrderEntries()) {
 				paymentService.addPaymentEntryForOrderEntry(entry, connection);
+				createInventoryEntryForOrder(entry, connection);
+				updateProductInventory(entry, connection);
 			}
 			connection.commit();
 		} catch (SQLException e) {
@@ -225,8 +227,8 @@ public class DefaultOrderService implements OrderService {
 				int code = keys.getInt(1);
 				entry.setCode(code);				
 				entry.setOrder(order);				
-				createInventoryEntryForOrder(entry, connection);
-				updateProductInventory(entry, connection);
+//				createInventoryEntryForOrder(entry, connection);
+//				updateProductInventory(entry, connection);
 				createEntryDeliveryAddress(entry, connection);
 			}
 		}
@@ -377,5 +379,10 @@ public class DefaultOrderService implements OrderService {
 			LOG.error("updateOrderDelivery :: Exception", e);
 			throw e;
 		}		
+	}
+
+	public void deleteOrder(OrderData order) {
+		
+		
 	}
 }

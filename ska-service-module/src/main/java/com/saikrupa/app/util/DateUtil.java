@@ -2,6 +2,8 @@ package com.saikrupa.app.util;
 
 
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -54,6 +56,16 @@ public class DateUtil {
 	
 	public static Timestamp createCurrentTimeStamp() { 
 		return new Timestamp(Calendar.getInstance().getTimeInMillis());
+	}
+	
+	public static String convertStringToStandard(final String dateString) {
+		SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		try {
+			Date date = f.parse(dateString);
+			return convertToStandard(date);
+		} catch (ParseException e) {
+			return dateString;
+		}
 	}
 	
 	

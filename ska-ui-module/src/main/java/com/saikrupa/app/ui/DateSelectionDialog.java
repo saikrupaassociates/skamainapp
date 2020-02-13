@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.time.Month;
 import java.time.YearMonth;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -94,6 +95,10 @@ public class DateSelectionDialog extends BaseAppDialog {
 		final WebComboBox yearComboBox = new WebComboBox(years);
 		selectionPanel.add(yearComboBox);
 		
+		Calendar currentDate = Calendar.getInstance();
+		int year = currentDate.get(Calendar.YEAR);
+		yearComboBox.setSelectedItem(Integer.valueOf(year));
+		
 		fc.gridx = 0;
 		fc.gridy = 1;
 		fc.insets = new Insets(0, 20, 10, 0);
@@ -107,7 +112,8 @@ public class DateSelectionDialog extends BaseAppDialog {
 		
 		selectionPanel.add(monthLabel);
 		selectionPanel.add(monthComboBox);
-
+		Month currentMonth = Month.of(currentDate.get(Calendar.MONTH)+1);
+		monthComboBox.setSelectedItem(currentMonth);
 
 		final WebButton searchButton = new WebButton("Search");
 		searchButton.setActionCommand("SEARCH");
